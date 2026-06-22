@@ -1,0 +1,14 @@
+{
+  "name": "mafia-game",
+  "version": "1.0.0",
+  "description": "Multiplayer Mafia Game",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.6.1"
+  }
+}

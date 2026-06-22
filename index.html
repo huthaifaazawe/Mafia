@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>المافيا | Mafia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Cinzel:wght@700;900&display=swap" rel="stylesheet"/>
+<style>
+/* ─── Tokens ─── */
+:root {
+  --bg:        #0a0a0f;
+  --bg2:       #12121a;
+  --bg3:       #1a1a27;
+  --card:      #16161f;
+  --border:    #2a2a3d;
+  --red:       #c0392b;
+  --red-glow:  #e74c3c;
+  --gold:      #c9a84c;
+  --gold-light:#f0c96a;
+  --text:      #e8e8f0;
+  --muted:     #7a7a9a;
+  --green:     #27ae60;
+  --blue:      #2980b9;
+  --radius:    12px;
+  --shadow:    0 8px 32px rgba(0,0,0,0.6);
+}
+
+/* ─── Reset ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Tajawal', sans-serif;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+[dir="ltr"] body { font-family: 'Tajawal', sans-serif; }
+
+/* ─── Background texture ─── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: -1;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 20%, rgba(192,57,43,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 80% 80%, rgba(201,168,76,0.05) 0%, transparent 60%),
+    repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(255,255,255,0.01) 50px, rgba(255,255,255,0.01) 51px),
+    repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(255,255,255,0.01) 50px, rgba(255,255,255,0.01) 51px);
+}
+
+/* ─── Screens ─── */
+.screen {
+  display: none;
+  min-height: 100dvh;
+  padding: 20px 16px 40px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+.screen.active { display: flex; flex-direction: column; align-items: center; }
+
+/* ─── Language toggle ─── */
+#lang-btn {
+  position: fixed; top: 16px; left: 16px; z-index: 100;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--gold);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-family: 'Tajawal', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all .2s;
+}
+#lang-btn:hover { background: var(--border); }
+
+/* ─── Logo ─── */
+.logo-wrap {
+  margin-top: 40px;
+  text-align: center;
+  position: relative;
+}
+.logo-icon {
+  font-size: 72px;
+  line-height: 1;
+  filter: drop-shadow(0 0 20px rgba(192,57,43,0.5));
+  animation: pulse-icon 3s ease-in-out infinite;
+}
+@keyframes pulse-icon {
+  0%,100% { filter: drop-shadow(0 0 20px rgba(192,57,43,0.4)); }
+  50%      { filter: drop-shadow(0 0 35px rgba(192,57,43,0.8)); }
+}
+.logo-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(36px, 10vw, 56px);
+  font-weight: 900;
+  letter-spacing: 6px;
+  color: var(--gold);
+  text-shadow: 0 0 30px rgba(201,168,76,0.4);
+  margin-top: 8px;
+}
+[dir="rtl"] .logo-title { font-family: 'Tajawal', sans-serif; font-size: clamp(40px,10vw,60px); letter-spacing: 2px; }
+.logo-sub {
+  color: var(--muted);
+  font-size: 13px;
+  letter-spacing: 3px;
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+
+/* ─── Cards ─── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 20px;
+  width: 100%;
+  box-shadow: var(--shadow);
+}
+.card + .card { margin-top: 16px; }
+
+/* ─── Inputs ─── */
+.input-group { margin-bottom: 16px; }
+.input-group label {
+  display: block;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+input[type="text"], input[type="number"] {
+  width: 100%;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: var(--text);
+  font-family: 'Tajawal', sans-serif;
+  font-size: 16px;
+  transition: border-color .2s, box-shadow .2s;
+  outline: none;
+  text-align: inherit;
+}
+input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.15);
+}
+
+/* ─── Buttons ─── */
+.btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 10px;
+  border: none;
+  font-family: 'Tajawal', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s;
+  position: relative; overflow: hidden;
+}
+.btn::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(rgba(255,255,255,0.07), transparent);
+  pointer-events: none;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary {
+  background: linear-gradient(135deg, var(--red), #8b1a13);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(192,57,43,0.4);
+}
+.btn-primary:hover { box-shadow: 0 6px 28px rgba(192,57,43,0.6); }
+.btn-gold {
+  background: linear-gradient(135deg, var(--gold), #a07830);
+  color: #1a1200;
+  box-shadow: 0 4px 20px rgba(201,168,76,0.3);
+}
+.btn-gold:hover { box-shadow: 0 6px 28px rgba(201,168,76,0.5); }
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 14px;
+  width: auto;
+}
+.btn + .btn { margin-top: 10px; }
+
+/* ─── Menu options ─── */
+.menu-options { display: flex; flex-direction: column; gap: 12px; width: 100%; margin-top: 24px; }
+.menu-btn {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  display: flex; align-items: center; gap: 14px;
+  cursor: pointer;
+  transition: all .2s;
+  color: var(--text);
+}
+.menu-btn:hover { border-color: var(--gold); background: var(--bg3); transform: translateX(-4px); }
+[dir="ltr"] .menu-btn:hover { transform: translateX(4px); }
+.menu-btn-icon { font-size: 28px; width: 40px; text-align: center; }
+.menu-btn-info h3 { font-size: 16px; font-weight: 700; color: var(--gold); }
+.menu-btn-info p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* ─── Section title ─── */
+.section-title {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin: 20px 0 10px;
+  width: 100%;
+}
+.divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--border), transparent);
+  margin: 20px 0;
+}
+
+/* ─── Toggle / checkbox ─── */
+.toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.toggle-row:last-child { border-bottom: none; }
+.toggle-label { font-size: 14px; }
+.toggle-label span { display: block; font-size: 11px; color: var(--muted); }
+.toggle {
+  position: relative; width: 44px; height: 24px;
+  cursor: pointer;
+}
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  transition: .2s;
+}
+.toggle-slider::after {
+  content: '';
+  position: absolute; left: 3px; top: 3px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: .2s;
+}
+.toggle input:checked + .toggle-slider { background: var(--red); border-color: var(--red); }
+.toggle input:checked + .toggle-slider::after { transform: translateX(20px); background: #fff; }
+
+/* ─── Number stepper ─── */
+.stepper {
+  display: flex; align-items: center; gap: 12px;
+}
+.stepper-btn {
+  width: 32px; height: 32px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: .15s;
+}
+.stepper-btn:hover { background: var(--border); }
+.stepper-val { font-size: 20px; font-weight: 700; color: var(--gold); min-width: 28px; text-align: center; }
+
+/* ─── Room code ─── */
+.room-code-display {
+  text-align: center;
+  padding: 20px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+}
+.room-code-display .code {
+  font-family: 'Cinzel', serif;
+  font-size: 42px;
+  font-weight: 900;
+  letter-spacing: 10px;
+  color: var(--gold);
+  text-shadow: 0 0 20px rgba(201,168,76,0.5);
+}
+.room-code-display .label { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+
+/* ─── Players list ─── */
+.players-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+.player-chip {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 14px;
+  transition: .2s;
+}
+.player-chip.dead {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+.player-chip.you { border-color: var(--gold); }
+.player-chip .avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--bg3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.player-chip .pname { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.player-chip .host-badge { font-size: 10px; color: var(--gold); }
+.player-chip.silenced .avatar::after { content: '🤫'; }
+
+/* ─── Role card ─── */
+.role-reveal {
+  text-align: center;
+  padding: 32px 20px;
+}
+.role-icon-big {
+  font-size: 80px;
+  filter: drop-shadow(0 0 20px rgba(192,57,43,0.6));
+  animation: role-appear .6s ease-out;
+}
+@keyframes role-appear {
+  from { transform: scale(0) rotate(-10deg); opacity: 0; }
+  to   { transform: scale(1) rotate(0deg);  opacity: 1; }
+}
+.role-name {
+  font-size: 28px;
+  font-weight: 900;
+  margin: 12px 0 6px;
+}
+.role-name.mafia, .role-name.don, .role-name.silencer { color: var(--red); }
+.role-name.civilian { color: var(--text); }
+.role-name.doctor { color: var(--green); }
+.role-name.detective { color: var(--blue); }
+.role-desc { color: var(--muted); font-size: 14px; line-height: 1.6; max-width: 280px; margin: 0 auto; }
+
+.mafia-team {
+  background: rgba(192,57,43,0.1);
+  border: 1px solid rgba(192,57,43,0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 16px;
+}
+.mafia-team h4 { color: var(--red); font-size: 12px; letter-spacing: 2px; margin-bottom: 8px; text-transform: uppercase; }
+.mafia-member { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 14px; }
+
+/* ─── Phase banner ─── */
+.phase-banner {
+  width: 100%;
+  border-radius: 10px;
+  padding: 14px 20px;
+  text-align: center;
+  margin-bottom: 16px;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 1px;
+}
+.phase-banner.night {
+  background: linear-gradient(135deg, rgba(192,57,43,0.2), rgba(139,26,19,0.1));
+  border: 1px solid rgba(192,57,43,0.4);
+  color: #ff6b6b;
+}
+.phase-banner.day {
+  background: linear-gradient(135deg, rgba(201,168,76,0.2), rgba(160,120,48,0.1));
+  border: 1px solid rgba(201,168,76,0.4);
+  color: var(--gold-light);
+}
+
+/* ─── Action area ─── */
+.action-area { width: 100%; }
+.action-title {
+  font-size: 13px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
+}
+.target-list { display: flex; flex-direction: column; gap: 8px; }
+.target-btn {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: var(--text);
+  font-family: 'Tajawal', sans-serif;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: .2s;
+  width: 100%;
+  text-align: inherit;
+}
+.target-btn:hover { border-color: var(--red); color: var(--red); }
+.target-btn.voted { border-color: var(--gold); color: var(--gold); }
+.target-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.vote-count {
+  background: var(--bg3);
+  border-radius: 20px;
+  padding: 2px 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ─── Chat ─── */
+.chat-wrap {
+  width: 100%;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.chat-messages {
+  height: 160px;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.chat-messages::-webkit-scrollbar { width: 4px; }
+.chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.chat-msg { font-size: 13px; }
+.chat-msg .sender { font-weight: 700; color: var(--gold); margin-inline-end: 6px; }
+.chat-msg.system { color: var(--muted); font-style: italic; text-align: center; }
+.chat-msg.mafia-msg .sender { color: var(--red); }
+.chat-input-row {
+  display: flex;
+  border-top: 1px solid var(--border);
+}
+.chat-input-row input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+}
+.chat-send {
+  background: var(--red);
+  border: none;
+  padding: 0 16px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 16px;
+  transition: .15s;
+}
+.chat-send:hover { background: var(--red-glow); }
+
+/* ─── Results popup ─── */
+.results-popup {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center; justify-content: center;
+  z-index: 200;
+  padding: 20px;
+}
+.results-popup.show { display: flex; }
+.results-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+  box-shadow: var(--shadow);
+  animation: slide-up .3s ease-out;
+}
+@keyframes slide-up {
+  from { transform: translateY(30px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+.results-card h2 { font-size: 22px; font-weight: 900; margin-bottom: 12px; }
+.results-card p  { color: var(--muted); font-size: 14px; line-height: 1.7; }
+.results-card .big-icon { font-size: 56px; margin-bottom: 12px; }
+
+/* ─── Win screen ─── */
+.win-icon { font-size: 80px; margin: 20px 0; animation: celebrate .6s ease-out; }
+@keyframes celebrate {
+  0%   { transform: scale(0) rotate(-20deg); }
+  60%  { transform: scale(1.2) rotate(5deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+.roles-reveal { width: 100%; }
+.reveal-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.reveal-row:last-child { border-bottom: none; }
+.reveal-role { font-size: 12px; color: var(--muted); }
+.reveal-role.mafia, .reveal-role.don, .reveal-role.silencer { color: var(--red); }
+.reveal-role.doctor { color: var(--green); }
+.reveal-role.detective { color: var(--blue); }
+.reveal-dead { opacity: 0.5; text-decoration: line-through; }
+
+/* ─── Waiting screen ─── */
+.waiting-dots { display: flex; gap: 6px; justify-content: center; margin-top: 12px; }
+.dot {
+  width: 8px; height: 8px;
+  background: var(--gold);
+  border-radius: 50%;
+  animation: bounce .8s ease-in-out infinite;
+}
+.dot:nth-child(2) { animation-delay: .15s; }
+.dot:nth-child(3) { animation-delay: .3s; }
+@keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+/* ─── Toast ─── */
+#toast {
+  position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 10px 20px;
+  font-size: 14px;
+  z-index: 300;
+  transition: transform .3s, opacity .3s;
+  opacity: 0;
+  white-space: nowrap;
+}
+#toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+/* ─── Utils ─── */
+.mt-4 { margin-top: 4px; }
+.mt-8 { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.mt-24 { margin-top: 24px; }
+.w100 { width: 100%; }
+.text-center { text-align: center; }
+.text-muted { color: var(--muted); font-size: 13px; }
+.flex-row { display: flex; align-items: center; justify-content: space-between; }
+</style>
+</head>
+<body>
+
+<button id="lang-btn" onclick="toggleLang()">EN</button>
+<div id="toast"></div>
+
+<!-- ══════════════════════════════════════ SCREEN: Name ══ -->
+<div class="screen active" id="screen-name">
+  <div class="logo-wrap">
+    <div class="logo-icon">🎭</div>
+    <div class="logo-title" id="logo-text">المافيا</div>
+    <div class="logo-sub" id="logo-sub">لعبة الخداع والاتهام</div>
+  </div>
+  <div style="width:100%; margin-top:40px;">
+    <div class="card">
+      <div class="input-group">
+        <label id="lbl-name">اسمك في اللعبة</label>
+        <input type="text" id="input-name" maxlength="16" placeholder="اكتب اسمك..." autocomplete="off"/>
+      </div>
+      <button class="btn btn-primary" onclick="submitName()">
+        <span>🎴</span> <span id="btn-enter">ادخل اللعبة</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ SCREEN: Menu ══ -->
+<div class="screen" id="screen-menu">
+  <div class="logo-wrap">
+    <div class="logo-icon">🎭</div>
+    <div class="logo-title" id="logo-text2">المافيا</div>
+  </div>
+  <div class="menu-options">
+    <div class="menu-btn" onclick="showScreen('screen-create')">
+      <div class="menu-btn-icon">🏠</div>
+      <div class="menu-btn-info">
+        <h3 id="mn-create">أنشئ غرفة</h3>
+        <p id="mn-create-sub">العب مع ربعك - أنت المضيف</p>
+      </div>
+    </div>
+    <div class="menu-btn" onclick="showScreen('screen-join')">
+      <div class="menu-btn-icon">🚪</div>
+      <div class="menu-btn-info">
+        <h3 id="mn-join">انضم لغرفة</h3>
+        <p id="mn-join-sub">عندك كود؟ ادخل هنا</p>
+      </div>
+    </div>
+  </div>
+  <div class="mt-24 text-center text-muted" id="greeting-text"></div>
+</div>
+
+<!-- ══════════════════════════════════════ SCREEN: Create Room ══ -->
+<div class="screen" id="screen-create">
+  <div style="width:100%; margin-top:20px;">
+    <button class="btn btn-ghost btn-sm w100" onclick="showScreen('screen-menu')" style="margin-bottom:16px;">← <span id="back1">رجوع</span></button>
+    <h2 class="text-center" style="color:var(--gold); margin-bottom:20px;" id="create-title">إعدادات الغرفة</h2>
+
+    <div class="card">
+      <div class="section-title" id="lbl-players-count">عدد اللاعبين</div>
+      <div class="toggle-row">
+        <span id="lbl-max-players">الحد الأقصى للاعبين</span>
+        <div class="stepper">
+          <button class="stepper-btn" onclick="stepSetting('maxPlayers',-1)">−</button>
+          <span class="stepper-val" id="val-maxPlayers">8</span>
+          <button class="stepper-btn" onclick="stepSetting('maxPlayers',1)">+</button>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <span id="lbl-mafia-count">عدد المافيا</span>
+        <div class="stepper">
+          <button class="stepper-btn" onclick="stepSetting('mafiaCount',-1)">−</button>
+          <span class="stepper-val" id="val-mafiaCount">2</span>
+          <button class="stepper-btn" onclick="stepSetting('mafiaCount',1)">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-8">
+      <div class="section-title" id="lbl-special-roles">الأدوار الخاصة</div>
+      <div class="toggle-row">
+        <div class="toggle-label">
+          <span id="role-don-lbl">دون المافيا 👑</span>
+          <span id="role-don-desc">زعيم المافيا - يُشخَّص كمواطن للمحقق</span>
+        </div>
+        <label class="toggle"><input type="checkbox" id="tog-don"><div class="toggle-slider"></div></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-label">
+          <span id="role-silencer-lbl">المُسكِّت 🤫</span>
+          <span id="role-silencer-desc">يمنع لاعبًا من التصويت ليلة كاملة</span>
+        </div>
+        <label class="toggle"><input type="checkbox" id="tog-silencer"><div class="toggle-slider"></div></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-label">
+          <span id="role-doctor-lbl">الطبيب 💉</span>
+          <span id="role-doctor-desc">يحمي لاعبًا من القتل كل ليلة</span>
+        </div>
+        <label class="toggle"><input type="checkbox" id="tog-doctor" checked><div class="toggle-slider"></div></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-label">
+          <span id="role-detective-lbl">المحقق 🔍</span>
+          <span id="role-detective-desc">يكشف هوية أي لاعب كل ليلة</span>
+        </div>
+        <label class="toggle"><input type="checkbox" id="tog-detective" checked><div class="toggle-slider"></div></label>
+      </div>
+    </div>
+
+    <div class="card mt-8">
+      <div class="toggle-row">
+        <div class="toggle-label">
+          <span id="lbl-host-mode">وضع المضيف 🎙️</span>
+          <span id="lbl-host-mode-desc">المضيف يدير المراحل يدوياً</span>
+        </div>
+        <label class="toggle"><input type="checkbox" id="tog-host"><div class="toggle-slider"></div></label>
+      </div>
+    </div>
+
+    <button class="btn btn-gold mt-16" onclick="createRoom()">
+      <span>🏠</span> <span id="btn-create-room">أنشئ الغرفة</span>
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ SCREEN: Join Room ══ -->
+<div class="screen" id="screen-join">
+  <div style="width:100%; margin-top:20px;">
+    <button class="btn btn-ghost btn-sm w100" onclick="showScreen('screen-menu')" style="margin-bottom:16px;">← <span id="back2">رجوع</span></button>
+    <h2 class="text-center" style="color:var(--gold); margin-bottom:20px;" id="join-title">انضم للغرفة</h2>
+    <div class="card">
+      <div class="input-group">
+        <label id="lbl-code">كود الغرفة</label>
+        <input type="text" id="input-code" maxlength="5" placeholder="XXXXX" style="text-align:center; font-size:24px; letter-spacing:8px; text-transform:uppercase;" autocomplete="off"/>
+      </div>
+      <button class="btn btn-primary" onclick="joinRoom()">
+        <span>🚪</span> <span id="btn-join">انضم</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ SCREEN: Lobby ══ -->
+<div class="screen" id="screen-lobby">
+  <div style="width:100%; margin-top:16px;">
+    <div class="room-code-display">
+      <div class="label" id="lbl-room-code">كود الغرفة</div>
+      <div class="code" id="display-code">-----</div>
+      <button class="btn btn-ghost btn-sm mt-8" onclick="copyCode()" id="btn-copy">📋 نسخ الكود</button>
+    </div>
+
+    <div class="card">
+      <div class="flex-row">
+        <div class="section-title" style="margin:0" id="lbl-players-in-room">اللاعبون في الغرفة</div>
+        <span class="text-muted" id="player-count-display">0</span>
+      </div>
+      <div class="players-grid mt-8" id="lobby-players"></div>
+    </div>
+
+    <div id="host-controls" style="display:none;">
+      <div class="divider"></div>
+      <button class="btn btn-primary" onclick="startGame()" id="btn-start">
+        <span>⚔️</span> <span id="btn-start-lbl">ابدأ اللعبة</span>
+      </button>
+      <p class="text-center text-muted mt-8" id="start-hint">يجب وجود ٤ لاعبين على الأقل</p>
+    </div>
+
+    <div id="waiting-msg" class="text-center mt-24">
+      <p class="text-muted" id="wait-text">بانتظار المضيف لبدء اللعبة...</p>
+      <div class="waiting-dots mt-8"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ SCREEN: Role Reveal ══ -->
+<div class="screen" id="screen-role">
+  <div style="width:100%; margin-top:20px;" id="role-reveal-content"></div>
+</div>
+
+<!-- ══════════════════════════════════════ SCREEN: Game ══ -->
+<div class="screen" id="screen-game">
+  <div style="width:100%;">
+    <div class="phase-banner night" id="phase-banner">🌙 الليل - اليوم 1</div>
+
+    <!-- My role badge -->
+    <div class="card" style="padding:10px 16px; margin-bottom:10px;">
+      <div class="flex-row">
+        <div style="font-size:12px; color:var(--muted);" id="lbl-my-role">دورك</div>
+        <div id="my-role-badge" style="font-size:14px; font-weight:700;"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="flex-row">
+        <div class="section-title" style="margin:0;" id="lbl-alive">اللاعبون</div>
+        <span class="text-muted" id="alive-count"></span>
+      </div>
+      <div class="players-grid mt-8" id="game-players"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Action area -->
+    <div class="action-area" id="action-area"></div>
+
+    <!-- Host controls -->
+    <div id="host-game-controls" style="display:none; margin-top:12px;">
+      <button class="btn btn-ghost btn-sm w100" onclick="hostEndVoting()" id="btn-end-vote">⏭ <span id="lbl-end-vote">إنهاء التصويت</span></button>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Chat -->
+    <div class="chat-wrap">
+      <div class="chat-messages" id="chat-messages"></div>
+      <div class="chat-input-row">
+        <input type="text" id="chat-input" placeholder="" id="chat-ph" maxlength="120" autocomplete="off" onkeydown="if(event.key==='Enter')sendChat()"/>
+        <button class="chat-send" onclick="sendChat()">↑</button>
+      </div>
+    </div>
+    <p class="text-muted text-center mt-4" style="font-size:11px;" id="chat-note"></p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ SCREEN: Game Over ══ -->
+<div class="screen" id="screen-gameover">
+  <div style="width:100%; text-align:center;">
+    <div class="win-icon" id="win-icon">🏆</div>
+    <h1 style="font-size:28px; font-weight:900;" id="win-title">فاز أهل البلد!</h1>
+    <p class="text-muted mt-8" id="win-sub">انكشفت المافيا</p>
+
+    <div class="divider"></div>
+    <div class="section-title text-center" id="lbl-roles-reveal">كشف الأدوار</div>
+    <div class="card roles-reveal" id="roles-reveal-list"></div>
+
+    <button class="btn btn-gold mt-24" onclick="resetToMenu()" id="btn-play-again">
+      <span>🔄</span> <span id="lbl-play-again">العب مرة أخرى</span>
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ Night Results Popup ══ -->
+<div class="results-popup" id="popup-results">
+  <div class="results-card">
+    <div class="big-icon" id="popup-icon">🌅</div>
+    <h2 id="popup-title">انتهى الليل</h2>
+    <p id="popup-text"></p>
+    <button class="btn btn-primary mt-16" onclick="closePopup()" id="btn-popup-ok" style="max-width:200px; margin:16px auto 0;">
+      <span id="lbl-ok">حسناً</span>
+    </button>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+// ─── I18n ─────────────────────────────────────────────────────────────────────
+const T = {
+  ar: {
+    dir: 'rtl', lang: 'ar',
+    logoText: 'المافيا', logoSub: 'لعبة الخداع والاتهام',
+    langBtn: 'EN',
+    lblName: 'اسمك في اللعبة', namePlaceholder: 'اكتب اسمك...', btnEnter: 'ادخل اللعبة',
+    mnCreate: 'أنشئ غرفة', mnCreateSub: 'العب مع ربعك - أنت المضيف',
+    mnJoin: 'انضم لغرفة', mnJoinSub: 'عندك كود؟ ادخل هنا',
+    back: 'رجوع',
+    createTitle: 'إعدادات الغرفة',
+    lblPlayersCount: 'عدد اللاعبين', lblMaxPlayers: 'الحد الأقصى للاعبين',
+    lblMafiaCount: 'عدد المافيا', lblSpecialRoles: 'الأدوار الخاصة',
+    roleDon: 'دون المافيا 👑', roleDonDesc: 'زعيم المافيا - يُشخَّص كمواطن للمحقق',
+    roleSilencer: 'المُسكِّت 🤫', roleSilencerDesc: 'يمنع لاعبًا من التصويت ليلة كاملة',
+    roleDoctor: 'الطبيب 💉', roleDoctorDesc: 'يحمي لاعبًا من القتل كل ليلة',
+    roleDetective: 'المحقق 🔍', roleDetectiveDesc: 'يكشف هوية أي لاعب كل ليلة',
+    lblHostMode: 'وضع المضيف 🎙️', lblHostModeDesc: 'المضيف يدير المراحل يدوياً',
+    btnCreateRoom: 'أنشئ الغرفة',
+    joinTitle: 'انضم للغرفة', lblCode: 'كود الغرفة', btnJoin: 'انضم',
+    lblRoomCode: 'كود الغرفة', btnCopy: '📋 نسخ الكود', copied: '✓ تم النسخ!',
+    lblPlayersInRoom: 'اللاعبون في الغرفة',
+    btnStart: 'ابدأ اللعبة', startHint: 'يجب وجود ٤ لاعبين على الأقل',
+    waitText: 'بانتظار المضيف لبدء اللعبة...',
+    youTag: '(أنت)', hostTag: 'مضيف',
+    roles: { mafia:'مافيا', don:'دون المافيا', silencer:'المُسكِّت', doctor:'طبيب', detective:'محقق', civilian:'مواطن' },
+    roleIcons: { mafia:'🔫', don:'👑', silencer:'🤫', doctor:'💉', detective:'🔍', civilian:'👤' },
+    roleDesc: {
+      mafia: 'أنت المافيا. تقتل مواطنًا كل ليلة. تجنّب الانكشاف.',
+      don: 'أنت الدون. قائد المافيا. تظهر كمواطن للمحقق.',
+      silencer: 'أنت المُسكِّت. تمنع لاعبًا من التصويت.',
+      doctor: 'أنت الطبيب. تحمي مواطنًا كل ليلة من القتل.',
+      detective: 'أنت المحقق. تكشف هوية أي لاعب كل ليلة.',
+      civilian: 'أنت مواطن. استخدم ذكاءك للكشف عن المافيا.'
+    },
+    mafiaTeamTitle: 'فريق المافيا',
+    btnUnderstood: 'فهمت! ابدأ اللعبة',
+    nightBanner: n => `🌙 الليل — اليوم ${n}`,
+    dayBanner: n => `☀️ النهار — اليوم ${n}`,
+    lblMyRole: 'دورك', lblAlive: 'اللاعبون',
+    nightAction: { mafia:'اختر من تقتل الليلة', detective:'اختر من تحقق معه', doctor:'اختر من تحمي', silencer:'اختر من تسكّت' },
+    voteAction: 'صوّت لطرد لاعب', lblEndVote: 'إنهاء التصويت',
+    waitingForAction: 'انتظر حتى ينتهي دورك...',
+    waitingForOthers: 'بانتظار بقية اللاعبين...',
+    chatNote: n => n === 'night' ? '🔴 لاعبو المافيا فقط يتحدثون الليل' : '💬 تحدث مع الجميع',
+    chatPlaceholder: 'رسالتك...',
+    nightResultTitle: 'انتهى الليل',
+    killed: name => `💀 تم قتل ${name} الليلة`,
+    saved: '💉 الطبيب أنقذ أحدًا الليلة!',
+    noKill: '😮 لا ضحايا الليلة',
+    dayResultTitle: 'انتهى النهار',
+    eliminated: name => `⚖️ تم طرد ${name} بالتصويت`,
+    noEliminate: 'لم يُطرد أحد',
+    winMafia: 'فازت المافيا!', winCiv: 'فاز أهل البلد!',
+    winMafiaSub: 'سيطرت المافيا على البلد', winCivSub: 'انكشفت المافيا',
+    lblRolesReveal: 'كشف الأدوار', btnPlayAgain: 'العب مرة أخرى',
+    errRoomNotFound: 'الغرفة غير موجودة!', errGameStarted: 'اللعبة بدأت بالفعل!',
+    errRoomFull: 'الغرفة ممتلئة!', errNeedMore: 'تحتاج 4 لاعبين على الأقل!',
+    playerLeft: name => `${name} غادر اللعبة`,
+    detectiveMafia: name => `🔍 ${name} من المافيا!`,
+    detectiveCivilian: name => `🔍 ${name} مواطن بريء`,
+    silenced: '🤫 أنت مُسكَّت هذا النهار، لا يمكنك التصويت',
+    dead: '💀 أنت ميت، لا يمكنك التصويت',
+    ok: 'حسناً',
+  },
+  en: {
+    dir: 'ltr', lang: 'en',
+    logoText: 'MAFIA', logoSub: 'A Game of Deception',
+    langBtn: 'AR',
+    lblName: 'Your name', namePlaceholder: 'Enter your name...', btnEnter: 'Enter Game',
+    mnCreate: 'Create Room', mnCreateSub: 'Host a game with friends',
+    mnJoin: 'Join Room', mnJoinSub: 'Have a code? Enter here',
+    back: 'Back',
+    createTitle: 'Room Settings',
+    lblPlayersCount: 'Player Count', lblMaxPlayers: 'Max Players',
+    lblMafiaCount: 'Mafia Count', lblSpecialRoles: 'Special Roles',
+    roleDon: 'Don 👑', roleDonDesc: 'Mafia leader - appears innocent to detective',
+    roleSilencer: 'Silencer 🤫', roleSilencerDesc: 'Prevents a player from voting for one night',
+    roleDoctor: 'Doctor 💉', roleDoctorDesc: 'Protects a player from being killed each night',
+    roleDetective: 'Detective 🔍', roleDetectiveDesc: 'Reveals the identity of any player each night',
+    lblHostMode: 'Host Mode 🎙️', lblHostModeDesc: 'Host controls phases manually',
+    btnCreateRoom: 'Create Room',
+    joinTitle: 'Join Room', lblCode: 'Room Code', btnJoin: 'Join',
+    lblRoomCode: 'Room Code', btnCopy: '📋 Copy Code', copied: '✓ Copied!',
+    lblPlayersInRoom: 'Players in Room',
+    btnStart: 'Start Game', startHint: 'Need at least 4 players',
+    waitText: 'Waiting for host to start...',
+    youTag: '(you)', hostTag: 'host',
+    roles: { mafia:'Mafia', don:'The Don', silencer:'Silencer', doctor:'Doctor', detective:'Detective', civilian:'Civilian' },
+    roleIcons: { mafia:'🔫', don:'👑', silencer:'🤫', doctor:'💉', detective:'🔍', civilian:'👤' },
+    roleDesc: {
+      mafia: 'You are Mafia. Kill a civilian each night. Avoid being caught.',
+      don: 'You are the Don. Mafia leader. You appear as civilian to the detective.',
+      silencer: 'You are the Silencer. Prevent a player from voting.',
+      doctor: 'You are the Doctor. Protect a player from death each night.',
+      detective: 'You are the Detective. Reveal any player\'s identity each night.',
+      civilian: 'You are a Civilian. Use your wits to expose the Mafia.'
+    },
+    mafiaTeamTitle: 'Your Mafia Team',
+    btnUnderstood: 'Got it! Start playing',
+    nightBanner: n => `🌙 Night — Day ${n}`,
+    dayBanner: n => `☀️ Day — Day ${n}`,
+    lblMyRole: 'Your Role', lblAlive: 'Players',
+    nightAction: { mafia:'Choose who to kill tonight', detective:'Choose who to investigate', doctor:'Choose who to protect', silencer:'Choose who to silence' },
+    voteAction: 'Vote to eliminate a player', lblEndVote: 'End Voting',
+    waitingForAction: 'Wait for your turn...',
+    waitingForOthers: 'Waiting for others...',
+    chatNote: n => n === 'night' ? '🔴 Only Mafia can chat at night' : '💬 Talk to everyone',
+    chatPlaceholder: 'Your message...',
+    nightResultTitle: 'Night is Over',
+    killed: name => `💀 ${name} was killed tonight`,
+    saved: '💉 The Doctor saved someone tonight!',
+    noKill: '😮 No victims tonight',
+    dayResultTitle: 'Day is Over',
+    eliminated: name => `⚖️ ${name} was eliminated by vote`,
+    noEliminate: 'Nobody was eliminated',
+    winMafia: 'Mafia Wins!', winCiv: 'Civilians Win!',
+    winMafiaSub: 'Mafia took over the city', winCivSub: 'The Mafia was exposed',
+    lblRolesReveal: 'Roles Revealed', btnPlayAgain: 'Play Again',
+    errRoomNotFound: 'Room not found!', errGameStarted: 'Game already started!',
+    errRoomFull: 'Room is full!', errNeedMore: 'Need at least 4 players!',
+    playerLeft: name => `${name} left the game`,
+    detectiveMafia: name => `🔍 ${name} is Mafia!`,
+    detectiveCivilian: name => `🔍 ${name} is an innocent Civilian`,
+    silenced: '🤫 You are silenced today, cannot vote',
+    dead: '💀 You are dead, cannot vote',
+    ok: 'OK',
+  }
+};
+
+let lang = 'ar';
+let myName = '';
+let myRole = null;
+let currentRoom = null;
+let currentPhase = null;
+let currentDay = 1;
+let myAlive = true;
+let mySilenced = false;
+let roomSettings = {};
+let amHost = false;
+let hasActed = false;
+
+const socket = io();
+
+// ─── Language ─────────────────────────────────────────────────────────────────
+function t() { return T[lang]; }
+
+function applyLang() {
+  const l = t();
+  document.documentElement.lang = l.lang;
+  document.documentElement.dir = l.dir;
+  document.getElementById('lang-btn').textContent = l.langBtn;
+  document.getElementById('logo-text').textContent = l.logoText;
+  document.getElementById('logo-text2').textContent = l.logoText;
+  document.getElementById('logo-sub').textContent = l.logoSub;
+  document.getElementById('lbl-name').textContent = l.lblName;
+  document.getElementById('input-name').placeholder = l.namePlaceholder;
+  document.getElementById('btn-enter').textContent = l.btnEnter;
+  document.getElementById('mn-create').textContent = l.mnCreate;
+  document.getElementById('mn-create-sub').textContent = l.mnCreateSub;
+  document.getElementById('mn-join').textContent = l.mnJoin;
+  document.getElementById('mn-join-sub').textContent = l.mnJoinSub;
+  document.getElementById('back1').textContent = l.back;
+  document.getElementById('back2').textContent = l.back;
+  document.getElementById('create-title').textContent = l.createTitle;
+  document.getElementById('lbl-players-count').textContent = l.lblPlayersCount;
+  document.getElementById('lbl-max-players').textContent = l.lblMaxPlayers;
+  document.getElementById('lbl-mafia-count').textContent = l.lblMafiaCount;
+  document.getElementById('lbl-special-roles').textContent = l.lblSpecialRoles;
+  document.getElementById('role-don-lbl').textContent = l.roleDon;
+  document.getElementById('role-don-desc').textContent = l.roleDonDesc;
+  document.getElementById('role-silencer-lbl').textContent = l.roleSilencer;
+  document.getElementById('role-silencer-desc').textContent = l.roleSilencerDesc;
+  document.getElementById('role-doctor-lbl').textContent = l.roleDoctor;
+  document.getElementById('role-doctor-desc').textContent = l.roleDoctorDesc;
+  document.getElementById('role-detective-lbl').textContent = l.roleDetective;
+  document.getElementById('role-detective-desc').textContent = l.roleDetectiveDesc;
+  document.getElementById('lbl-host-mode').textContent = l.lblHostMode;
+  document.getElementById('lbl-host-mode-desc').textContent = l.lblHostModeDesc;
+  document.getElementById('btn-create-room').textContent = l.btnCreateRoom;
+  document.getElementById('join-title').textContent = l.joinTitle;
+  document.getElementById('lbl-code').textContent = l.lblCode;
+  document.getElementById('btn-join').textContent = l.btnJoin;
+  document.getElementById('lbl-room-code').textContent = l.lblRoomCode;
+  document.getElementById('btn-copy').textContent = l.btnCopy;
+  document.getElementById('lbl-players-in-room').textContent = l.lblPlayersInRoom;
+  document.getElementById('btn-start-lbl').textContent = l.btnStart;
+  document.getElementById('start-hint').textContent = l.startHint;
+  document.getElementById('wait-text').textContent = l.waitText;
+  document.getElementById('lbl-end-vote').textContent = l.lblEndVote;
+  document.getElementById('lbl-roles-reveal').textContent = l.lblRolesReveal;
+  document.getElementById('btn-play-again').querySelector('span:last-child').textContent = l.btnPlayAgain;
+  document.getElementById('btn-popup-ok').querySelector('#lbl-ok').textContent = l.ok;
+  document.getElementById('lbl-my-role').textContent = l.lblMyRole;
+  document.getElementById('lbl-alive').textContent = l.lblAlive;
+  if (myName) document.getElementById('greeting-text').textContent = `👋 ${myName}`;
+  document.getElementById('chat-input').placeholder = l.chatPlaceholder;
+}
+
+function toggleLang() {
+  lang = lang === 'ar' ? 'en' : 'ar';
+  applyLang();
+  if (currentPhase) updateGameUI();
+}
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
+const settings = { maxPlayers: 8, mafiaCount: 2 };
+function stepSetting(key, delta) {
+  if (key === 'maxPlayers') settings.maxPlayers = Math.max(4, Math.min(15, settings.maxPlayers + delta));
+  if (key === 'mafiaCount') settings.mafiaCount = Math.max(1, Math.min(6, settings.mafiaCount + delta));
+  document.getElementById(`val-${key}`).textContent = settings[key];
+}
+
+// ─── Navigation ───────────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function submitName() {
+  const val = document.getElementById('input-name').value.trim();
+  if (!val) { showToast(t().lblName); return; }
+  myName = val;
+  document.getElementById('greeting-text').textContent = `👋 ${myName}`;
+  showScreen('screen-menu');
+}
+
+function resetToMenu() {
+  myRole = null; currentRoom = null; currentPhase = null;
+  myAlive = true; mySilenced = false; amHost = false; hasActed = false;
+  document.getElementById('chat-messages').innerHTML = '';
+  showScreen('screen-menu');
+}
+
+// ─── Room ─────────────────────────────────────────────────────────────────────
+function buildSettings() {
+  return {
+    maxPlayers: settings.maxPlayers,
+    mafiaCount: settings.mafiaCount,
+    hasDon: document.getElementById('tog-don').checked,
+    hasSilencer: document.getElementById('tog-silencer').checked,
+    hasDoctor: document.getElementById('tog-doctor').checked,
+    hasDetective: document.getElementById('tog-detective').checked,
+    hostMode: document.getElementById('tog-host').checked
+  };
+}
+
+function createRoom() {
+  socket.emit('create_room', { name: myName, settings: buildSettings() });
+}
+
+function joinRoom() {
+  const code = document.getElementById('input-code').value.trim().toUpperCase();
+  if (code.length < 4) { showToast(t().lblCode); return; }
+  socket.emit('join_room', { name: myName, code });
+}
+
+function startGame() { socket.emit('start_game', { code: currentRoom }); }
+function hostEndVoting() { socket.emit('end_voting', { code: currentRoom }); }
+
+function copyCode() {
+  navigator.clipboard.writeText(currentRoom).catch(() => {});
+  showToast(t().copied);
+}
+
+// ─── Render Lobby ─────────────────────────────────────────────────────────────
+function renderLobby(data) {
+  document.getElementById('display-code').textContent = currentRoom;
+  document.getElementById('player-count-display').textContent = `${data.players.length}/${data.settings.maxPlayers || 8}`;
+  const grid = document.getElementById('lobby-players');
+  grid.innerHTML = data.players.map(p => `
+    <div class="player-chip ${p.id === socket.id ? 'you' : ''}">
+      <div class="avatar">${p.name[0].toUpperCase()}</div>
+      <div>
+        <div class="pname">${p.name}</div>
+        ${p.isHost ? `<div class="host-badge">${t().hostTag}</div>` : ''}
+        ${p.id === socket.id ? `<div class="host-badge" style="color:var(--muted)">${t().youTag}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+
+  amHost = data.hostId === socket.id;
+  document.getElementById('host-controls').style.display = amHost ? 'block' : 'none';
+  document.getElementById('waiting-msg').style.display = amHost ? 'none' : 'block';
+  roomSettings = data.settings;
+}
+
+// ─── Role Reveal ──────────────────────────────────────────────────────────────
+function showRoleReveal(role, mafiaTeam) {
+  myRole = role;
+  const l = t();
+  const isMafia = ['mafia','don','silencer'].includes(role);
+  let mafiaHTML = '';
+  if (isMafia && mafiaTeam && mafiaTeam.length > 1) {
+    mafiaHTML = `
+      <div class="mafia-team">
+        <h4>${l.mafiaTeamTitle}</h4>
+        ${mafiaTeam.map(m => `<div class="mafia-member">${l.roleIcons[m.role]} ${m.name} <span style="color:var(--muted); font-size:11px;">(${l.roles[m.role]})</span></div>`).join('')}
+      </div>
+    `;
+  }
+  document.getElementById('role-reveal-content').innerHTML = `
+    <div class="role-reveal">
+      <div class="role-icon-big">${l.roleIcons[role]}</div>
+      <div class="role-name ${isMafia ? 'mafia' : role}">${l.roles[role]}</div>
+      <p class="role-desc mt-8">${l.roleDesc[role]}</p>
+      ${mafiaHTML}
+      <button class="btn btn-primary mt-24" onclick="showScreen('screen-game')">
+        <span>▶</span> <span>${l.btnUnderstood}</span>
+      </button>
+    </div>
+  `;
+  showScreen('screen-role');
+}
+
+// ─── Game UI ──────────────────────────────────────────────────────────────────
+function updateGameUI() {
+  const l = t();
+  const banner = document.getElementById('phase-banner');
+  if (currentPhase === 'night') {
+    banner.className = 'phase-banner night';
+    banner.textContent = l.nightBanner(currentDay);
+  } else {
+    banner.className = 'phase-banner day';
+    banner.textContent = l.dayBanner(currentDay);
+  }
+  document.getElementById('chat-note').textContent = l.chatNote(currentPhase);
+  const myRoleBadge = document.getElementById('my-role-badge');
+  if (myRole) {
+    const isMafia = ['mafia','don','silencer'].includes(myRole);
+    myRoleBadge.textContent = `${l.roleIcons[myRole]} ${l.roles[myRole]}`;
+    myRoleBadge.style.color = isMafia ? 'var(--red)' : myRole === 'doctor' ? 'var(--green)' : myRole === 'detective' ? 'var(--blue)' : 'var(--text)';
+  }
+}
+
+function renderGamePlayers(players, votes) {
+  const l = t();
+  const grid = document.getElementById('game-players');
+  const aliveCount = players.filter(p => p.alive).length;
+  document.getElementById('alive-count').textContent = aliveCount;
+  grid.innerHTML = players.map(p => {
+    const voteCount = votes ? Object.values(votes).filter(v => v === p.id).length : 0;
+    return `
+      <div class="player-chip ${!p.alive ? 'dead' : ''} ${p.id === socket.id ? 'you' : ''} ${p.silenced ? 'silenced' : ''}">
+        <div class="avatar">${p.name[0].toUpperCase()}</div>
+        <div>
+          <div class="pname">${p.name}</div>
+          ${p.id === socket.id ? `<div class="host-badge" style="color:var(--muted)">${t().youTag}</div>` : ''}
+          ${voteCount > 0 ? `<div class="host-badge" style="color:var(--red)">⚖️ ${voteCount}</div>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderActionArea(players) {
+  const l = t();
+  const area = document.getElementById('action-area');
+  if (!myAlive) { area.innerHTML = `<p class="text-muted text-center">${l.dead}</p>`; return; }
+  if (mySilenced && currentPhase === 'day') { area.innerHTML = `<p class="text-muted text-center">${l.silenced}</p>`; return; }
+  if (hasActed) { area.innerHTML = `<p class="text-muted text-center">${l.waitingForOthers}</p>`; return; }
+
+  const alivePlayers = players.filter(p => p.alive && p.id !== socket.id);
+
+  if (currentPhase === 'night') {
+    const isMafiaRole = ['mafia','don'].includes(myRole);
+    const isSilencer = myRole === 'silencer';
+    const isDoctor = myRole === 'doctor';
+    const isDetective = myRole === 'detective';
+
+    if (!isMafiaRole && !isSilencer && !isDoctor && !isDetective) {
+      area.innerHTML = `<p class="text-muted text-center">${l.waitingForAction}</p>`;
+      return;
+    }
+
+    let actionKey = isMafiaRole ? 'mafia' : isSilencer ? 'silencer' : isDoctor ? 'doctor' : 'detective';
+    let targets = isMafiaRole || isSilencer
+      ? alivePlayers.filter(p => !['mafia','don','silencer'].includes(p.role || ''))
+      : alivePlayers;
+
+    // Doctor can save self too
+    if (isDoctor) targets = players.filter(p => p.alive);
+
+    area.innerHTML = `
+      <div class="action-title">${l.nightAction[actionKey]}</div>
+      <div class="target-list">
+        ${targets.map(p => `
+          <button class="target-btn" onclick="doNightAction('${p.id}', '${actionKey}')">
+            ${p.name}
+          </button>
+        `).join('')}
+      </div>
+    `;
+  } else {
+    // Day voting
+    area.innerHTML = `
+      <div class="action-title">${l.voteAction}</div>
+      <div class="target-list" id="vote-list">
+        ${alivePlayers.map(p => `
+          <button class="target-btn" id="vote-${p.id}" onclick="doVote('${p.id}')">
+            ${p.name}
+            <span class="vote-count" id="vc-${p.id}">0</span>
+          </button>
+        `).join('')}
+      </div>
+    `;
+  }
+}
+
+function doNightAction(targetId, actionKey) {
+  if (hasActed) return;
+  hasActed = true;
+  if (actionKey === 'mafia') socket.emit('mafia_vote', { code: currentRoom, targetId });
+  else if (actionKey === 'silencer') socket.emit('silencer_action', { code: currentRoom, targetId });
+  else if (actionKey === 'doctor') socket.emit('doctor_save', { code: currentRoom, targetId });
+  else if (actionKey === 'detective') socket.emit('detective_check', { code: currentRoom, targetId });
+  renderActionArea([]);
+}
+
+function doVote(targetId) {
+  if (hasActed) return;
+  hasActed = true;
+  socket.emit('day_vote', { code: currentRoom, targetId });
+  document.querySelectorAll('.target-btn').forEach(b => b.classList.remove('voted'));
+  const btn = document.getElementById(`vote-${targetId}`);
+  if (btn) btn.classList.add('voted');
+}
+
+// ─── Chat ─────────────────────────────────────────────────────────────────────
+function sendChat() {
+  const inp = document.getElementById('chat-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  socket.emit('send_message', { code: currentRoom, text });
+  inp.value = '';
+}
+
+function addChatMsg(msg) {
+  const box = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = `chat-msg ${msg.type === 'system' ? 'system' : msg.type === 'mafia' ? 'mafia-msg' : ''}`;
+  if (msg.type === 'system') {
+    div.textContent = msg.text;
+  } else {
+    div.innerHTML = `<span class="sender">${msg.name}</span>${msg.text}`;
+  }
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+// ─── Popup ────────────────────────────────────────────────────────────────────
+function showPopup(icon, title, text) {
+  document.getElementById('popup-icon').textContent = icon;
+  document.getElementById('popup-title').textContent = title;
+  document.getElementById('popup-text').textContent = text;
+  document.getElementById('btn-popup-ok').querySelector('#lbl-ok').textContent = t().ok;
+  document.getElementById('popup-results').classList.add('show');
+}
+function closePopup() { document.getElementById('popup-results').classList.remove('show'); }
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ─── Socket Events ────────────────────────────────────────────────────────────
+socket.on('room_created', ({ code }) => {
+  currentRoom = code;
+  showScreen('screen-lobby');
+});
+
+socket.on('room_joined', ({ code }) => {
+  currentRoom = code;
+  showScreen('screen-lobby');
+});
+
+socket.on('room_update', (data) => {
+  if (document.getElementById('screen-lobby').classList.contains('active')) {
+    renderLobby(data);
+  }
+  if (document.getElementById('screen-game').classList.contains('active')) {
+    const me = data.players.find(p => p.id === socket.id);
+    if (me) { myAlive = me.alive; mySilenced = me.silenced; }
+    renderGamePlayers(data.players, null);
+    amHost = data.hostId === socket.id;
+    document.getElementById('host-game-controls').style.display = (amHost && currentPhase === 'day') ? 'block' : 'none';
+    roomSettings = data.settings;
+  }
+});
+
+socket.on('role_assigned', ({ role, mafiaTeam }) => {
+  showRoleReveal(role, mafiaTeam);
+});
+
+socket.on('phase_change', ({ phase, day, results, eliminated }) => {
+  currentPhase = phase;
+  currentDay = day;
+  hasActed = false;
+  const l = t();
+
+  if (phase === 'night') {
+    // Show day results first
+    if (eliminated !== undefined) {
+      const text = eliminated ? l.eliminated(eliminated.name) : l.noEliminate;
+      showPopup('⚖️', l.dayResultTitle, text);
+    }
+    showScreen('screen-game');
+    updateGameUI();
+    document.getElementById('host-game-controls').style.display = 'none';
+  } else {
+    // Show night results
+    let icon = '🌅', title = l.nightResultTitle, text = l.noKill;
+    if (results && results.length > 0) {
+      const r = results[0];
+      if (r.type === 'killed') { icon = '💀'; text = l.killed(r.name); }
+      else if (r.type === 'saved') { icon = '💉'; text = l.saved; }
+    }
+    showPopup(icon, title, text);
+    showScreen('screen-game');
+    updateGameUI();
+    document.getElementById('host-game-controls').style.display = amHost ? 'block' : 'none';
+  }
+});
+
+socket.on('vote_update', ({ votes, total }) => {
+  // Update vote counts on buttons
+  Object.entries(votes).forEach(([voterId, targetId]) => {
+    const el = document.getElementById(`vc-${targetId}`);
+    if (el) {
+      const count = Object.values(votes).filter(v => v === targetId).length;
+      el.textContent = count;
+    }
+  });
+});
+
+socket.on('mafia_voted', () => {
+  if (['mafia','don','silencer'].includes(myRole)) {
+    addChatMsg({ type: 'system', text: t().waitingForOthers });
+  }
+});
+
+socket.on('detective_result', ({ targetName, isMafia }) => {
+  const l = t();
+  const msg = isMafia ? l.detectiveMafia(targetName) : l.detectiveCivilian(targetName);
+  showPopup('🔍', T[lang].roleDetective ? '' : 'Detective', msg);
+});
+
+socket.on('game_over', ({ winner, rolesReveal }) => {
+  const l = t();
+  const isMafiaWin = winner === 'mafia';
+  document.getElementById('win-icon').textContent = isMafiaWin ? '🔫' : '⚖️';
+  document.getElementById('win-title').textContent = isMafiaWin ? l.winMafia : l.winCiv;
+  document.getElementById('win-sub').textContent = isMafiaWin ? l.winMafiaSub : l.winCivSub;
+  document.getElementById('win-title').style.color = isMafiaWin ? 'var(--red)' : 'var(--gold)';
+
+  const list = document.getElementById('roles-reveal-list');
+  list.innerHTML = rolesReveal.map(p => `
+    <div class="reveal-row ${!p.alive ? 'reveal-dead' : ''}">
+      <span>${p.name} ${p.id === socket.id ? `<small style="color:var(--muted)">${l.youTag}</small>` : ''}</span>
+      <span class="reveal-role ${p.role}">${l.roleIcons[p.role]} ${l.roles[p.role]}</span>
+    </div>
+  `).join('');
+
+  showScreen('screen-gameover');
+});
+
+socket.on('chat_message', (msg) => {
+  addChatMsg(msg);
+});
+
+socket.on('player_left', ({ name }) => {
+  addChatMsg({ type: 'system', text: t().playerLeft(name) });
+});
+
+socket.on('error', ({ msg }) => {
+  const l = t();
+  const msgs = {
+    room_not_found: l.errRoomNotFound,
+    game_started: l.errGameStarted,
+    room_full: l.errRoomFull,
+    need_more_players: l.errNeedMore
+  };
+  showToast(msgs[msg] || msg);
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+document.getElementById('input-name').addEventListener('keydown', e => {
+  if (e.key === 'Enter') submitName();
+});
+applyLang();
+</script>
+</body>
+</html>
