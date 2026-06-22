@@ -9,7 +9,8 @@ const io = new Server(server, {
   cors: { origin: '*' }
 });
 
-//app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 // ─── Game State ───────────────────────────────────────────────────────────────
 const rooms = {};
