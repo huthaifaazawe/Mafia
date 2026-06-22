@@ -171,13 +171,13 @@ io.on('connection', (socket) => {
     const room = rooms[code];
     if (!room) return;
     const player = room.players.find(p => p.id === socket.id);
-    if (!player || !['mafia','don','silencer'].includes(player.role)) return;
+    if (!player || !['mafia','don'].includes(player.role)) return;
 
     room.mafiaVotes[socket.id] = targetId;
 
-    // Check if all mafia voted
-    const mafiaAlive = getMafiaPlayers(room);
-    if (Object.keys(room.mafiaVotes).length >= mafiaAlive.length) {
+    // Only mafia + don vote to kill (silencer acts separately)
+    const mafiaKillers = room.players.filter(p => p.alive && ['mafia','don'].includes(p.role));
+    if (Object.keys(room.mafiaVotes).length >= mafiaKillers.length) {
       // Majority vote
       const counts = {};
       Object.values(room.mafiaVotes).forEach(id => { counts[id] = (counts[id] || 0) + 1; });
@@ -255,8 +255,9 @@ io.on('connection', (socket) => {
 
     room.phase = 'day';
     room.votes = {};
+    const sanitizedDay = room.players.map(p => ({ id: p.id, name: p.name, alive: p.alive, isHost: p.isHost, silenced: p.silenced || false }));
     broadcastRoom(room);
-    io.to(room.code).emit('phase_change', { phase: 'day', day: room.day, results });
+    io.to(room.code).emit('phase_change', { phase: 'day', day: room.day, results, players: sanitizedDay });
   }
 
   // Day vote
@@ -310,8 +311,9 @@ io.on('connection', (socket) => {
     room.phase = 'night';
     room.day++;
     setupNightActions(room);
+    const sanitizedNight = room.players.map(p => ({ id: p.id, name: p.name, alive: p.alive, isHost: p.isHost, silenced: p.silenced || false }));
     broadcastRoom(room);
-    io.to(room.code).emit('phase_change', { phase: 'night', day: room.day, eliminated });
+    io.to(room.code).emit('phase_change', { phase: 'night', day: room.day, eliminated, players: sanitizedNight });
   }
 
   function endGame(room, winner) {
