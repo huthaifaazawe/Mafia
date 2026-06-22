@@ -806,7 +806,7 @@ input:focus {
   </div>
 </div>
 
-<script src="https://mafia-wu60.onrender.com/socket.io/socket.io.js"></script>
+<script src="/socket.io/socket.io.js"></script>
 <script>
 // ─── I18n ─────────────────────────────────────────────────────────────────────
 const T = {
@@ -1115,7 +1115,7 @@ function showRoleReveal(role, mafiaTeam) {
       <div class="role-name ${isMafia ? 'mafia' : role}">${l.roles[role]}</div>
       <p class="role-desc mt-8">${l.roleDesc[role]}</p>
       ${mafiaHTML}
-      <button class="btn btn-primary mt-24" onclick="showScreen('screen-game')">
+      <button class="btn btn-primary mt-24" onclick="showScreen('screen-game'); updateGameUI(); renderActionArea(window._lastPlayers || []);">
         <span>▶</span> <span>${l.btnUnderstood}</span>
       </button>
     </div>
@@ -1184,9 +1184,8 @@ function renderActionArea(players) {
     }
 
     let actionKey = isMafiaRole ? 'mafia' : isSilencer ? 'silencer' : isDoctor ? 'doctor' : 'detective';
-    let targets = isMafiaRole || isSilencer
-      ? alivePlayers.filter(p => !['mafia','don','silencer'].includes(p.role || ''))
-      : alivePlayers;
+    // Server hides roles from room_update for security — mafia picks from all alive non-self players
+    let targets = alivePlayers;
 
     // Doctor can save self too
     if (isDoctor) targets = players.filter(p => p.alive);
@@ -1287,6 +1286,7 @@ socket.on('room_joined', ({ code }) => {
 });
 
 socket.on('room_update', (data) => {
+  window._lastPlayers = data.players; // cache for role reveal screen
   if (document.getElementById('screen-lobby').classList.contains('active')) {
     renderLobby(data);
   }
@@ -1297,6 +1297,8 @@ socket.on('room_update', (data) => {
     amHost = data.hostId === socket.id;
     document.getElementById('host-game-controls').style.display = (amHost && currentPhase === 'day') ? 'block' : 'none';
     roomSettings = data.settings;
+    // Re-render action area so buttons don't disappear on player updates
+    if (!hasActed) renderActionArea(data.players);
   }
 });
 
@@ -1304,14 +1306,20 @@ socket.on('role_assigned', ({ role, mafiaTeam }) => {
   showRoleReveal(role, mafiaTeam);
 });
 
-socket.on('phase_change', ({ phase, day, results, eliminated }) => {
+socket.on('phase_change', ({ phase, day, results, eliminated, players }) => {
   currentPhase = phase;
   currentDay = day;
   hasActed = false;
   const l = t();
 
+  // Update local player state if server sent players list
+  if (players) {
+    const me = players.find(p => p.id === socket.id);
+    if (me) { myAlive = me.alive; mySilenced = me.silenced; }
+    renderGamePlayers(players, null);
+  }
+
   if (phase === 'night') {
-    // Show day results first
     if (eliminated !== undefined) {
       const text = eliminated ? l.eliminated(eliminated.name) : l.noEliminate;
       showPopup('⚖️', l.dayResultTitle, text);
@@ -1320,7 +1328,6 @@ socket.on('phase_change', ({ phase, day, results, eliminated }) => {
     updateGameUI();
     document.getElementById('host-game-controls').style.display = 'none';
   } else {
-    // Show night results
     let icon = '🌅', title = l.nightResultTitle, text = l.noKill;
     if (results && results.length > 0) {
       const r = results[0];
@@ -1332,6 +1339,10 @@ socket.on('phase_change', ({ phase, day, results, eliminated }) => {
     updateGameUI();
     document.getElementById('host-game-controls').style.display = amHost ? 'block' : 'none';
   }
+
+  // Always render action area after phase change
+  const currentPlayers = players || [];
+  renderActionArea(currentPlayers);
 });
 
 socket.on('vote_update', ({ votes, total }) => {
