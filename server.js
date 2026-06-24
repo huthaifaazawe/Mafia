@@ -149,7 +149,8 @@ io.on('connection', (socket) => {
     // Setup night actions
     setupNightActions(room);
     broadcastRoom(room);
-    io.to(room.code).emit('phase_change', { phase: 'night', day: room.day });
+    const sanitizedStart = room.players.map(p => ({ id: p.id, name: p.name, alive: p.alive, isHost: p.isHost, silenced: false }));
+    io.to(room.code).emit('phase_change', { phase: 'night', day: room.day, players: sanitizedStart });
   });
 
   function setupNightActions(room) {
