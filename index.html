@@ -600,6 +600,18 @@ input:focus{
         <div class="toggle-label"><span id="role-detective-lbl">المحقق 🔍</span><span id="role-detective-desc">يكشف هوية أي لاعب</span></div>
         <label class="toggle"><input type="checkbox" id="tog-detective" checked><div class="toggle-slider"></div></label>
       </div>
+      <div class="toggle-row">
+        <div class="toggle-label"><span id="role-elder-lbl">شيخ الصالحين 👴</span><span id="role-elder-desc">يكشف بطاقته فيصير صوته = 3 أصوات</span></div>
+        <label class="toggle"><input type="checkbox" id="tog-elder"><div class="toggle-slider"></div></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-label"><span id="role-avenger-lbl">ولد الصالحين ⚡</span><span id="role-avenger-desc">يسحب لاعبًا معه لما يموت</span></div>
+        <label class="toggle"><input type="checkbox" id="tog-avenger"><div class="toggle-slider"></div></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-label"><span id="role-sniper-lbl">القناص 🎯</span><span id="role-sniper-desc">طلقة وحدة — أصابت مافيا؟ ينجو. أصابت بريء؟ يموتان معاً</span></div>
+        <label class="toggle"><input type="checkbox" id="tog-sniper"><div class="toggle-slider"></div></label>
+      </div>
     </div>
     <div class="card mt-8">
       <div class="toggle-row">
@@ -819,30 +831,42 @@ const T = {
     lblPlayersCount:'عدد اللاعبين',lblMaxPlayers:'الحد الأقصى',
     lblMafiaCount:'عدد المافيا',lblSpecialRoles:'الأدوار الخاصة',
     roleDon:'دون المافيا 👑',roleDonDesc:'يُشخَّص كمواطن للمحقق',
-    roleSilencer:'المُسكِّت 🤫',roleSilencerDesc:'يمنع لاعبًا من التصويت',
+    roleSilencer:'المُسكِّت 🤫',roleSilencerDesc:'يمنع لاعبًا من التصويت (يقدر يسكّت نفسه)',
     roleDoctor:'الطبيب 💉',roleDoctorDesc:'يحمي لاعبًا من القتل',
     roleDetective:'المحقق 🔍',roleDetectiveDesc:'يكشف هوية أي لاعب',
+    roleElder:'شيخ الصالحين 👴',roleElderDesc:'يكشف بطاقته فيصير صوته = 3 أصوات',
+    roleAvenger:'ولد الصالحين ⚡',roleAvengerDesc:'يسحب لاعبًا معه لما يموت',
+    roleSniper:'القناص 🎯',roleSniperDesc:'طلقة وحدة — أصابت مافيا؟ ينجو. أصابت بريء؟ يموتان معاً',
     lblHostMode:'وضع المضيف 🎙️',lblHostModeDesc:'المضيف يدير المراحل يدوياً',
     btnCreateRoom:'أنشئ الغرفة',
     joinTitle:'انضم للغرفة',lblCode:'كود الغرفة',btnJoin:'انضم',
     lblRoomCode:'كود الغرفة',btnCopy:'📋 نسخ الكود',copied:'✓ تم النسخ!',
     lblPlayersInRoom:'اللاعبون',btnStart:'ابدأ اللعبة',startHint:'يجب وجود ٤ لاعبين على الأقل',
     waitText:'بانتظار المضيف...',youTag:'(أنت)',hostTag:'مضيف',
-    roles:{mafia:'مافيا',don:'دون المافيا',silencer:'المُسكِّت',doctor:'طبيب',detective:'محقق',civilian:'مواطن'},
-    roleIcons:{mafia:'🔫',don:'👑',silencer:'🤫',doctor:'💉',detective:'🔍',civilian:'👤'},
+    roles:{mafia:'مافيا',don:'دون المافيا',silencer:'المُسكِّت',doctor:'طبيب',detective:'محقق',elder:'شيخ الصالحين',avenger:'ولد الصالحين',sniper:'قناص',civilian:'مواطن'},
+    roleIcons:{mafia:'🔫',don:'👑',silencer:'🤫',doctor:'💉',detective:'🔍',elder:'👴',avenger:'⚡',sniper:'🎯',civilian:'👤'},
     roleDesc:{
       mafia:'أنت المافيا. تقتل مواطنًا كل ليلة. تجنّب الانكشاف.',
       don:'أنت الدون. قائد المافيا. تظهر كمواطن للمحقق.',
-      silencer:'أنت المُسكِّت. تمنع لاعبًا من التصويت ليلة كاملة.',
+      silencer:'أنت المُسكِّت. تمنع أي لاعب (حتى نفسك) من التصويت ليلة كاملة.',
       doctor:'أنت الطبيب. تحمي مواطنًا كل ليلة من القتل.',
       detective:'أنت المحقق. تكشف هوية أي لاعب كل ليلة.',
+      elder:'أنت شيخ الصالحين. متى كشفت بطاقتك نهارًا أصبح صوتك يساوي 3 أصوات في التصويت.',
+      avenger:'أنت ولد الصالحين. قبل أن تموت اختر لاعبًا يخرج معك من اللعبة.',
+      sniper:'أنت القناص. عندك طلقة وحدة طول اللعبة. أصابت مافيا؟ تنجو وتبقى مجهولاً. أصابت بريء؟ تموتان معاً.',
       civilian:'أنت مواطن. استخدم ذكاءك للكشف عن المافيا.'
     },
     mafiaTeamTitle:'فريق المافيا',btnUnderstood:'فهمت! ابدأ اللعبة',
     nightBanner:n=>`🌙 الليل — اليوم ${n}`,dayBanner:n=>`☀️ النهار — اليوم ${n}`,
     lblMyRole:'دورك',lblAlive:'اللاعبون',
-    nightAction:{mafia:'اختر من تقتل الليلة',detective:'اختر من تحقق معه',doctor:'اختر من تحمي',silencer:'اختر من تسكّت'},
-    voteAction:'صوّت لطرد لاعب',lblEndVote:'إنهاء التصويت',
+    nightAction:{mafia:'اختر من تقتل الليلة',detective:'اختر من تحقق معه',doctor:'اختر من تحمي',silencer:'اختر من تسكّت (يشمل نفسك)'},
+    voteAction:'صوّت لطرد لاعب',
+    elderRevealBtn:'كشف البطاقة (صوتك = 3)',elderRevealed:n=>`👴 ${n} كشف بطاقته — صوته يساوي 3!`,
+    avengerSetBtn:'اختر من تسحبه معك إذا مت',avengerConfirmed:n=>`⚡ سيخرج ${n} معك إذا متّ`,
+    sniperShootBtn:'استخدم طلقتك 🎯',sniperUsed:'الطلقة استُخدمت بالفعل',
+    sniperHit:(t,r)=>`🎯 القناص أصاب ${t} (${r}) — المافيا خرجت!`,
+    sniperMiss:(t,r,s)=>`💥 القناص أخطأ — ${t} كان بريئاً (${r}). خرج ${s} والقناص معاً.`,
+    avengerDragged:(k,d,dr)=>`⚡ ${k} مات وسحب ${d} (${dr}) معه!`,lblEndVote:'إنهاء التصويت',
     waitingForAction:'انتظر حتى ينتهي دورك...',waitingForOthers:'بانتظار بقية اللاعبين...',
     chatHeader:'💬 الدردشة',chatNote:n=>n==='night'?'🔴 لاعبو المافيا فقط يتحدثون الليل':'💬 تحدث مع الجميع',
     chatPH:'رسالتك...',
@@ -864,30 +888,42 @@ const T = {
     lblPlayersCount:'Player Count',lblMaxPlayers:'Max Players',
     lblMafiaCount:'Mafia Count',lblSpecialRoles:'Special Roles',
     roleDon:'Don 👑',roleDonDesc:'Appears innocent to detective',
-    roleSilencer:'Silencer 🤫',roleSilencerDesc:'Prevents a player from voting',
+    roleSilencer:'Silencer 🤫',roleSilencerDesc:'Prevents any player (even self) from voting',
     roleDoctor:'Doctor 💉',roleDoctorDesc:'Protects a player each night',
     roleDetective:'Detective 🔍',roleDetectiveDesc:'Reveals any player\'s identity',
+    roleElder:'Elder 👴',roleElderDesc:'Reveal your card to make your vote count as 3',
+    roleAvenger:'Avenger ⚡',roleAvengerDesc:'Drags a chosen player out when you die',
+    roleSniper:'Sniper 🎯',roleSniperDesc:'One shot — hit Mafia? They die, you survive. Hit innocent? Both die.',
     lblHostMode:'Host Mode 🎙️',lblHostModeDesc:'Host controls phases manually',
     btnCreateRoom:'Create Room',
     joinTitle:'Join Room',lblCode:'Room Code',btnJoin:'Join',
     lblRoomCode:'Room Code',btnCopy:'📋 Copy Code',copied:'✓ Copied!',
     lblPlayersInRoom:'Players',btnStart:'Start Game',startHint:'Need at least 4 players',
     waitText:'Waiting for host...',youTag:'(you)',hostTag:'host',
-    roles:{mafia:'Mafia',don:'The Don',silencer:'Silencer',doctor:'Doctor',detective:'Detective',civilian:'Civilian'},
-    roleIcons:{mafia:'🔫',don:'👑',silencer:'🤫',doctor:'💉',detective:'🔍',civilian:'👤'},
+    roles:{mafia:'Mafia',don:'The Don',silencer:'Silencer',doctor:'Doctor',detective:'Detective',elder:'Elder',avenger:'Avenger',sniper:'Sniper',civilian:'Civilian'},
+    roleIcons:{mafia:'🔫',don:'👑',silencer:'🤫',doctor:'💉',detective:'🔍',elder:'👴',avenger:'⚡',sniper:'🎯',civilian:'👤'},
     roleDesc:{
       mafia:'You are Mafia. Kill a civilian each night. Avoid being caught.',
       don:'You are the Don. Mafia leader. You appear innocent to the detective.',
-      silencer:'You are the Silencer. Prevent a player from voting.',
+      silencer:'You are the Silencer. Prevent any player (even yourself) from voting.',
       doctor:'You are the Doctor. Protect a player from death each night.',
       detective:'You are the Detective. Reveal any player\'s identity each night.',
+      elder:'You are the Elder. Reveal your card during the day to make your vote count as 3.',
+      avenger:'You are the Avenger. Before you die, choose one player to take out with you.',
+      sniper:'You are the Sniper. One bullet per game. Hit Mafia? They die, you survive secretly. Hit innocent? Both eliminated.',
       civilian:'You are a Civilian. Use your wits to expose the Mafia.'
     },
     mafiaTeamTitle:'Your Mafia Team',btnUnderstood:'Got it! Start playing',
     nightBanner:n=>`🌙 Night — Day ${n}`,dayBanner:n=>`☀️ Day — Day ${n}`,
     lblMyRole:'Your Role',lblAlive:'Players',
-    nightAction:{mafia:'Choose who to kill tonight',detective:'Choose who to investigate',doctor:'Choose who to protect',silencer:'Choose who to silence'},
-    voteAction:'Vote to eliminate a player',lblEndVote:'End Voting',
+    nightAction:{mafia:'Choose who to kill tonight',detective:'Choose who to investigate',doctor:'Choose who to protect',silencer:'Choose who to silence (including yourself)'},
+    voteAction:'Vote to eliminate a player',
+    elderRevealBtn:'Reveal Card (vote = 3)',elderRevealed:n=>`👴 ${n} revealed their card — vote counts as 3!`,
+    avengerSetBtn:'Choose who to drag out if you die',avengerConfirmed:n=>`⚡ ${n} will leave with you if you die`,
+    sniperShootBtn:'Use your bullet 🎯',sniperUsed:'Bullet already used',
+    sniperHit:(t,r)=>`🎯 Sniper hit ${t} (${r}) — Mafia eliminated!`,
+    sniperMiss:(t,r,s)=>`💥 Sniper missed — ${t} was innocent (${r}). Both ${s} and ${t} eliminated.`,
+    avengerDragged:(k,d,dr)=>`⚡ ${k} died and dragged ${d} (${dr}) out!`,lblEndVote:'End Voting',
     waitingForAction:'Wait for your turn...',waitingForOthers:'Waiting for others...',
     chatHeader:'💬 Chat',chatNote:n=>n==='night'?'🔴 Only Mafia can chat at night':'💬 Talk to everyone',
     chatPH:'Your message...',
@@ -930,6 +966,9 @@ function applyLang(){
   s('role-silencer-lbl',l.roleSilencer);s('role-silencer-desc',l.roleSilencerDesc);
   s('role-doctor-lbl',l.roleDoctor);s('role-doctor-desc',l.roleDoctorDesc);
   s('role-detective-lbl',l.roleDetective);s('role-detective-desc',l.roleDetectiveDesc);
+  s('role-elder-lbl',l.roleElder);s('role-elder-desc',l.roleElderDesc);
+  s('role-avenger-lbl',l.roleAvenger);s('role-avenger-desc',l.roleAvengerDesc);
+  s('role-sniper-lbl',l.roleSniper);s('role-sniper-desc',l.roleSniperDesc);
   s('lbl-host-mode',l.lblHostMode);s('lbl-host-mode-desc',l.lblHostModeDesc);
   s('btn-create-room',l.btnCreateRoom);s('join-title',l.joinTitle);s('lbl-code',l.lblCode);
   s('btn-join',l.btnJoin);s('lbl-room-code',l.lblRoomCode);s('btn-copy',l.btnCopy);
@@ -974,6 +1013,9 @@ function buildSettings(){
     hasSilencer:document.getElementById('tog-silencer').checked,
     hasDoctor:document.getElementById('tog-doctor').checked,
     hasDetective:document.getElementById('tog-detective').checked,
+    hasElder:document.getElementById('tog-elder').checked,
+    hasAvenger:document.getElementById('tog-avenger').checked,
+    hasSniper:document.getElementById('tog-sniper').checked,
     hostMode:document.getElementById('tog-host').checked};
 }
 
@@ -1044,9 +1086,16 @@ function showRoleReveal(role,mafiaTeam){
 }
 
 function onUnderstood(){
-  showScreen('screen-game');updateGameUI();
-  const players=window._lastPlayers||[];
-  renderGamePlayers(players,null);renderActionArea(players);
+  if(window._pendingGameTransition){
+    const fn=window._pendingGameTransition;
+    window._pendingGameTransition=null;
+    fn();
+  } else {
+    // First night — go directly, no transition yet
+    showScreen('screen-game');updateGameUI();
+    const players=window._lastPlayers||[];
+    renderGamePlayers(players,null);renderActionArea(players);
+  }
 }
 
 function updateGameUI(){
@@ -1081,28 +1130,92 @@ function renderGamePlayers(players,votes){
 
 function renderActionArea(players){
   const l=t(), area=document.getElementById('action-area');
-  if(!myAlive){area.innerHTML=`<p class="text-muted text-center">${l.dead}</p>`;return}
-  if(mySilenced&&currentPhase==='day'){area.innerHTML=`<p class="text-muted text-center">${l.silenced}</p>`;return}
-  if(hasActed){area.innerHTML=`<p class="text-muted text-center">${l.waitingForOthers}</p>`;return}
+  if(!myAlive){
+    area.innerHTML=`<div style="text-align:center;padding:20px 0">
+      <div style="font-size:40px;margin-bottom:8px">💀</div>
+      <p class="text-muted">${l.dead}</p>
+    </div>`;return;
+  }
+  if(mySilenced&&currentPhase==='day'){
+    area.innerHTML=`<div style="text-align:center;padding:20px 0">
+      <div style="font-size:40px;margin-bottom:8px">🤫</div>
+      <p class="text-muted">${l.silenced}</p>
+    </div>`;return;
+  }
+  if(hasActed){
+    area.innerHTML=`<div style="text-align:center;padding:20px 0">
+      <div style="font-size:40px;margin-bottom:8px">⏳</div>
+      <p class="text-muted">${l.waitingForOthers}</p>
+      <div class="dots mt-8"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    </div>`;return;
+  }
   const alive=players.filter(p=>p.alive&&p.id!==socket.id);
   if(currentPhase==='night'){
     const isMaf=['mafia','don'].includes(myRole), isSil=myRole==='silencer';
     const isDoc=myRole==='doctor', isDet=myRole==='detective';
-    if(!isMaf&&!isSil&&!isDoc&&!isDet){area.innerHTML=`<p class="text-muted text-center">${l.waitingForAction}</p>`;return}
+    if(!isMaf&&!isSil&&!isDoc&&!isDet){
+      area.innerHTML=`<div style="text-align:center;padding:20px 0">
+        <div style="font-size:40px;margin-bottom:8px">😴</div>
+        <p class="text-muted">${l.waitingForAction}</p>
+        <div class="dots mt-8"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      </div>`;return;
+    }
     const key=isMaf?'mafia':isSil?'silencer':isDoc?'doctor':'detective';
+    // Doctor can protect self, everyone else cannot target themselves
     const targets=isDoc?players.filter(p=>p.alive):alive;
-    area.innerHTML=`<div class="action-title">${l.nightAction[key]}</div>
-      <div class="target-list">${targets.map(p=>`
-        <button class="target-btn" onclick="doNightAction('${p.id}','${key}')">
-          <span>${p.name}</span><span>›</span>
-        </button>`).join('')}</div>`;
+    const colors={mafia:'var(--red2)',silencer:'#a855f7',doctor:'#2ecc71',detective:'#3498db'};
+    const col=colors[key]||'var(--text)';
+    area.innerHTML=`
+      <div style="border:1px solid ${col}33;border-radius:12px;padding:14px;background:${col}08;margin-bottom:10px">
+        <div style="color:${col};font-size:12px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px">${l.nightAction[key]}</div>
+        <div class="target-list">${targets.map(p=>`
+          <button class="target-btn" onclick="doNightAction('${p.id}','${key}')" style="--hover-col:${col}">
+            <span>${p.name}</span>
+            <span style="color:${col};font-size:18px">›</span>
+          </button>`).join('')}</div>
+      </div>`;
   } else {
-    area.innerHTML=`<div class="action-title">${l.voteAction}</div>
-      <div class="target-list" id="vote-list">${alive.map(p=>`
-        <button class="target-btn" id="vote-${p.id}" onclick="doVote('${p.id}')">
-          <span>${p.name}</span>
-          <span class="vote-count" id="vc-${p.id}">0</span>
-        </button>`).join('')}</div>`;
+    // Day phase — voting + special day actions
+    let extraBtns = '';
+
+    // Elder: reveal button (only if not revealed yet)
+    if(myRole==='elder' && myAlive){
+      const el=room_elderRevealed||false;
+      if(!el) extraBtns+=`<button class="btn btn-gold btn-sm w100" style="margin-bottom:10px" onclick="elderReveal()">👴 ${l.elderRevealBtn}</button>`;
+    }
+    // Avenger: set drag target button
+    if(myRole==='avenger' && myAlive){
+      extraBtns+=`
+        <div style="border:1px solid #a855f733;border-radius:12px;padding:12px;background:#a855f708;margin-bottom:10px">
+          <div style="color:#a855f7;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">${l.avengerSetBtn}</div>
+          <div class="target-list">${alive.map(p=>`
+            <button class="target-btn" id="av-${p.id}" onclick="avengerSetTarget('${p.id}')">
+              <span>${p.name}</span><span style="color:#a855f7">⚡</span>
+            </button>`).join('')}</div>
+        </div>`;
+    }
+    // Sniper: shoot button (one shot, only if not used)
+    if(myRole==='sniper' && myAlive && !window._sniperUsed){
+      extraBtns+=`
+        <div style="border:1px solid #f59e0b33;border-radius:12px;padding:12px;background:#f59e0b08;margin-bottom:10px">
+          <div style="color:#f59e0b;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">${l.sniperShootBtn}</div>
+          <div class="target-list">${alive.map(p=>`
+            <button class="target-btn" onclick="sniperShoot('${p.id}')">
+              <span>${p.name}</span><span style="color:#f59e0b">🎯</span>
+            </button>`).join('')}</div>
+        </div>`;
+    }
+
+    area.innerHTML=`
+      ${extraBtns}
+      <div style="border:1px solid var(--gold)33;border-radius:12px;padding:14px;background:rgba(201,168,76,.05)">
+        <div style="color:var(--gold);font-size:12px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px">${l.voteAction}</div>
+        <div class="target-list" id="vote-list">${alive.map(p=>`
+          <button class="target-btn" id="vote-${p.id}" onclick="doVote('${p.id}')">
+            <span>${p.name}</span>
+            <span class="vote-count" id="vc-${p.id}">0</span>
+          </button>`).join('')}</div>
+      </div>`;
   }
 }
 
@@ -1121,6 +1234,28 @@ function doVote(targetId){
   document.querySelectorAll('.target-btn').forEach(b=>b.classList.remove('voted'));
   const btn=document.getElementById(`vote-${targetId}`);
   if(btn)btn.classList.add('voted');
+}
+
+// ── Elder ──
+function elderReveal(){
+  socket.emit('elder_reveal',{code:currentRoom});
+  window.room_elderRevealed=true;
+  renderActionArea(window._lastPlayers||[]);
+}
+// ── Avenger ──
+function avengerSetTarget(targetId){
+  socket.emit('avenger_set_target',{code:currentRoom,targetId});
+  const p=(window._lastPlayers||[]).find(x=>x.id===targetId);
+  if(p) showToast(t().avengerConfirmed(p.name));
+  document.querySelectorAll('[id^="av-"]').forEach(b=>b.style.borderColor='');
+  const btn=document.getElementById(`av-${targetId}`);
+  if(btn) btn.style.borderColor='#a855f7';
+}
+// ── Sniper ──
+function sniperShoot(targetId){
+  socket.emit('sniper_shoot',{code:currentRoom,targetId});
+  window._sniperUsed=true;
+  renderActionArea(window._lastPlayers||[]);
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1176,7 +1311,12 @@ socket.on('room_update',data=>{
   }
 });
 
-socket.on('role_assigned',({role,mafiaTeam})=>{myRole=role;showRoleReveal(role,mafiaTeam)});
+socket.on('role_assigned',({role,mafiaTeam})=>{
+  myRole=role;
+  window._sniperUsed=false;
+  window.room_elderRevealed=false;
+  showRoleReveal(role,mafiaTeam);
+});
 
 socket.on('phase_change',({phase,day,results,eliminated,players})=>{
   currentPhase=phase;currentDay=day;hasActed=false;
@@ -1187,32 +1327,48 @@ socket.on('phase_change',({phase,day,results,eliminated,players})=>{
     if(me){myAlive=me.alive;mySilenced=me.silenced}
     renderGamePlayers(players,null);
   }
-  if(phase==='night'){
-    sfx('night');
-    const doTransition=()=>{
-      showScreen('screen-game');updateGameUI();
-      document.getElementById('host-game-controls').style.display='none';
-      renderActionArea(window._lastPlayers||[]);
-    };
-    if(eliminated!==undefined){
-      const txt=eliminated?l.eliminated(eliminated.name):l.noEliminate;
-      showPopup('⚖️',l.dayResultTitle,txt);
-      phaseTransition('🌙',doTransition);
-    } else { phaseTransition('🌙',doTransition) }
-  } else {
-    sfx('day');
-    let icon='🌅',title=l.nightResultTitle,text=l.noKill;
-    if(results&&results.length>0){
-      const r=results[0];
-      if(r.type==='killed'){icon='💀';text=l.killed(r.name)}
-      else if(r.type==='saved'){icon='💉';text=l.saved}
+
+  // Build what to do when we actually enter the game screen
+  // We delay it if the player is still on the role screen
+  const doEnterGame=()=>{
+    if(phase==='night'){
+      sfx('night');
+      const go=()=>{
+        showScreen('screen-game');updateGameUI();
+        document.getElementById('host-game-controls').style.display='none';
+        renderActionArea(window._lastPlayers||[]);
+      };
+      if(eliminated!==undefined){
+        const txt=eliminated?l.eliminated(eliminated.name):l.noEliminate;
+        showPopup('⚖️',l.dayResultTitle,txt);
+        phaseTransition('🌙',go);
+      } else { phaseTransition('🌙',go) }
+    } else {
+      sfx('day');
+      let icon='🌅',title=l.nightResultTitle,text=l.noKill;
+      if(results&&results.length>0){
+        const r=results[0];
+        if(r.type==='killed'){icon='💀';text=l.killed(r.name)}
+        else if(r.type==='saved'){icon='💉';text=l.saved}
+        // Avenger drag result
+        const av=results.find(x=>x.type==='avenger');
+        if(av) text+='\n'+l.avengerDragged(av.killedName,av.draggedName,l.roles[av.draggedRole]||av.draggedRole);
+      }
+      showPopup(icon,title,text);
+      phaseTransition('☀️',()=>{
+        showScreen('screen-game');updateGameUI();
+        document.getElementById('host-game-controls').style.display=amHost?'block':'none';
+        renderActionArea(window._lastPlayers||[]);
+      });
     }
-    showPopup(icon,title,text);
-    phaseTransition('☀️',()=>{
-      showScreen('screen-game');updateGameUI();
-      document.getElementById('host-game-controls').style.display=amHost?'block':'none';
-      renderActionArea(window._lastPlayers||[]);
-    });
+  };
+
+  // If player is still reading their role card, queue it for when they press "understood"
+  const onRoleScreen=document.getElementById('screen-role').classList.contains('active');
+  if(onRoleScreen){
+    window._pendingGameTransition=doEnterGame;
+  } else {
+    doEnterGame();
   }
 });
 
@@ -1250,6 +1406,26 @@ socket.on('player_left',({name})=>{sfx('click');addChatMsg({type:'system',text:t
 socket.on('error',({msg})=>{
   const m={room_not_found:t().errRoomNotFound,game_started:t().errGameStarted,room_full:t().errRoomFull,need_more_players:t().errNeedMore};
   showToast(m[msg]||msg);
+});
+
+// ── Elder revealed ──
+socket.on('elder_revealed',({name})=>{
+  addChatMsg({type:'system',text:t().elderRevealed(name)});
+  sfx('day');
+  renderActionArea(window._lastPlayers||[]);
+});
+
+// ── Sniper result ──
+socket.on('sniper_result',({hit,targetName,targetRole,sniperName})=>{
+  const l=t();
+  sfx('kill');
+  if(hit){
+    showPopup('🎯','',l.sniperHit(targetName,l.roles[targetRole]||targetRole));
+  } else {
+    showPopup('💥','',l.sniperMiss(targetName,l.roles[targetRole]||targetRole,sniperName));
+  }
+  if(myRole==='sniper') window._sniperUsed=true;
+  renderActionArea(window._lastPlayers||[]);
 });
 
 // ══════════════════════════════════════════════════════════
