@@ -874,7 +874,7 @@ const T = {
     dayResultTitle:'انتهى النهار',eliminated:n=>`⚖️ تم طرد ${n} بالتصويت`,noEliminate:'لم يُطرد أحد',
     winMafia:'فازت المافيا!',winCiv:'فاز أهل البلد!',winMafiaSub:'سيطرت المافيا على البلد',winCivSub:'انكشفت المافيا',
     lblRolesReveal:'كشف الأدوار',btnPlayAgain:'العب مرة أخرى',
-    errRoomNotFound:'الغرفة غير موجودة!',errGameStarted:'اللعبة بدأت بالفعل!',errRoomFull:'الغرفة ممتلئة!',errNeedMore:'تحتاج 4 لاعبين على الأقل!',
+    errRoomNotFound:'الغرفة غير موجودة!',errGameStarted:'اللعبة بدأت بالفعل!',errRoomFull:'الغرفة ممتلئة!',errNeedMore:'تحتاج 4 لاعبين على الأقل!',errTooManyRoles:'الأدوار المختارة أكثر من اللاعبين! قلّل الأدوار.',
     playerLeft:n=>`${n} غادر اللعبة`,detectiveMafia:n=>`🔍 ${n} من المافيا!`,detectiveCivilian:n=>`🔍 ${n} مواطن بريء`,
     silenced:'🤫 أنت مُسكَّت هذا النهار، لا يمكنك التصويت',dead:'💀 أنت ميت، لا يمكنك التصويت',ok:'حسناً',
   },
@@ -931,7 +931,7 @@ const T = {
     dayResultTitle:'Day is Over',eliminated:n=>`⚖️ ${n} was eliminated by vote`,noEliminate:'Nobody was eliminated',
     winMafia:'Mafia Wins!',winCiv:'Civilians Win!',winMafiaSub:'Mafia took over the city',winCivSub:'The Mafia was exposed',
     lblRolesReveal:'Roles Revealed',btnPlayAgain:'Play Again',
-    errRoomNotFound:'Room not found!',errGameStarted:'Game already started!',errRoomFull:'Room is full!',errNeedMore:'Need at least 4 players!',
+    errRoomNotFound:'Room not found!',errGameStarted:'Game already started!',errRoomFull:'Room is full!',errNeedMore:'Need at least 4 players!',errTooManyRoles:'Too many roles selected for player count! Remove some roles.',
     playerLeft:n=>`${n} left the game`,detectiveMafia:n=>`🔍 ${n} is Mafia!`,detectiveCivilian:n=>`🔍 ${n} is an innocent Civilian`,
     silenced:'🤫 You are silenced today, cannot vote',dead:'💀 You are dead, cannot vote',ok:'OK',
   }
@@ -1404,7 +1404,7 @@ socket.on('game_over',({winner,rolesReveal})=>{
 socket.on('chat_message',msg=>addChatMsg(msg));
 socket.on('player_left',({name})=>{sfx('click');addChatMsg({type:'system',text:t().playerLeft(name)})});
 socket.on('error',({msg})=>{
-  const m={room_not_found:t().errRoomNotFound,game_started:t().errGameStarted,room_full:t().errRoomFull,need_more_players:t().errNeedMore};
+  const m={room_not_found:t().errRoomNotFound,game_started:t().errGameStarted,room_full:t().errRoomFull,need_more_players:t().errNeedMore,too_many_roles:t().errTooManyRoles};
   showToast(m[msg]||msg);
 });
 
