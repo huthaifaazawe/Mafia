@@ -19,25 +19,31 @@ function generateCode() {
 }
 
 function assignRoles(players, settings) {
+  const count = players.length;
   const roles = [];
-  const mafiaCount  = settings.mafiaCount  || 2;
 
-  // ── Mafia team ──
-  if (settings.hasDon)      roles.push('don');
-  if (settings.hasSilencer) roles.push('silencer');
-  const regularMafia = mafiaCount - (settings.hasDon ? 1 : 0) - (settings.hasSilencer ? 1 : 0);
-  for (let i = 0; i < Math.max(0, regularMafia); i++) roles.push('mafia');
+  // ── Step 1: Mafia team first (always guaranteed) ──
+  const mafiaCount = Math.min(settings.mafiaCount || 2, Math.floor(count / 2));
+  let mafiaLeft = mafiaCount;
 
-  // ── Good special roles ──
-  if (settings.hasDoctor)    roles.push('doctor');
-  if (settings.hasDetective) roles.push('detective');
-  if (settings.hasElder)     roles.push('elder');
-  if (settings.hasAvenger)   roles.push('avenger');
-  if (settings.hasSniper)    roles.push('sniper');
+  if (settings.hasDon && mafiaLeft > 0)      { roles.push('don');      mafiaLeft--; }
+  if (settings.hasSilencer && mafiaLeft > 0)  { roles.push('silencer'); mafiaLeft--; }
+  for (let i = 0; i < mafiaLeft; i++)          roles.push('mafia');
 
-  // ── Fill rest with civilians ──
-  const needed = players.length - roles.length;
-  for (let i = 0; i < needed; i++) roles.push('civilian');
+  // ── Step 2: Good special roles — only add if slots remain ──
+  const specials = [];
+  if (settings.hasDoctor)    specials.push('doctor');
+  if (settings.hasDetective) specials.push('detective');
+  if (settings.hasElder)     specials.push('elder');
+  if (settings.hasAvenger)   specials.push('avenger');
+  if (settings.hasSniper)    specials.push('sniper');
+
+  for (const role of specials) {
+    if (roles.length < count) roles.push(role);
+  }
+
+  // ── Step 3: Fill remaining with civilians ──
+  while (roles.length < count) roles.push('civilian');
 
   // Shuffle
   for (let i = roles.length - 1; i > 0; i--) {
@@ -78,15 +84,14 @@ function setupNight(room) {
   room.mafiaKillTarget = null;
   room.doctorSave   = null;
   room.silencerTarget = null;
-  room.sniperUsed   = room.sniperUsed || false;
   room.nightActionsLeft = [];
 
   const alive = getAlive(room);
-  if (alive.some(p => ['mafia','don'].includes(p.role)))  room.nightActionsLeft.push('mafia_kill');
-  if (alive.some(p => p.role === 'silencer'))              room.nightActionsLeft.push('silencer');
-  if (alive.some(p => p.role === 'doctor'))                room.nightActionsLeft.push('doctor');
-  if (alive.some(p => p.role === 'detective'))             room.nightActionsLeft.push('detective');
-  // Sniper acts during day (declares shot), not tracked in nightActionsLeft
+  // Any alive mafia member can vote to kill (even if don is dead)
+  if (alive.some(p => MAFIA_ROLES.includes(p.role))) room.nightActionsLeft.push('mafia_kill');
+  if (alive.some(p => p.role === 'doctor'))            room.nightActionsLeft.push('doctor');
+  if (alive.some(p => p.role === 'detective'))         room.nightActionsLeft.push('detective');
+  if (alive.some(p => p.role === 'silencer'))          room.nightActionsLeft.push('silencer');
 }
 
 function endGame(room, winner) {
@@ -202,7 +207,7 @@ io.on('connection', (socket) => {
     const room = rooms[code];
     if (!room)                    return socket.emit('error', { msg: 'room_not_found' });
     if (room.phase !== 'lobby')   return socket.emit('error', { msg: 'game_started' });
-    if (room.players.length >= 15) return socket.emit('error', { msg: 'room_full' });
+    if (room.players.length >= (room.settings.maxPlayers || 8)) return socket.emit('error', { msg: 'room_full' });
     room.players.push({ id: socket.id, name, alive: true, isHost: false, role: null });
     socket.join(code);
     socket.emit('room_joined', { code });
@@ -213,6 +218,14 @@ io.on('connection', (socket) => {
     const room = rooms[code];
     if (!room || room.hostId !== socket.id) return;
     if (room.players.length < 4) return socket.emit('error', { msg: 'need_more_players' });
+
+    // Validate roles don't exceed players
+    const s = room.settings;
+    const mafiaCount = Math.min(s.mafiaCount || 2, Math.floor(room.players.length / 2));
+    const specialCount = [s.hasDoctor,s.hasDetective,s.hasElder,s.hasAvenger,s.hasSniper].filter(Boolean).length;
+    if (mafiaCount + specialCount >= room.players.length) {
+      return socket.emit('error', { msg: 'too_many_roles' });
+    }
 
     const roles = assignRoles(room.players, room.settings);
     room.players.forEach((p, i) => { p.role = roles[i]; p.elderRevealed = false; p.avengerTarget = null; });
@@ -235,15 +248,20 @@ io.on('connection', (socket) => {
     io.to(code).emit('phase_change', { phase: 'night', day: room.day, players: sanitize(room) });
   });
 
-  // ── Night: Mafia kill ──
+  // ── Night: Mafia kill — any alive mafia member can vote ──
   socket.on('mafia_vote', ({ code, targetId }) => {
     const room = rooms[code];
     if (!room) return;
     const player = room.players.find(p => p.id === socket.id);
-    if (!player || !['mafia','don'].includes(player.role)) return;
+    // All mafia roles except silencer-only participate in kill vote
+    if (!player || !MAFIA_ROLES.includes(player.role)) return;
+
     room.mafiaVotes[socket.id] = targetId;
-    const killers = room.players.filter(p => p.alive && ['mafia','don'].includes(p.role));
+
+    // Count how many alive mafia should vote (all mafia roles)
+    const killers = room.players.filter(p => p.alive && MAFIA_ROLES.includes(p.role));
     if (Object.keys(room.mafiaVotes).length >= killers.length) {
+      // Pick target by majority
       const counts = {};
       Object.values(room.mafiaVotes).forEach(id => { counts[id] = (counts[id] || 0) + 1; });
       room.mafiaKillTarget = Object.entries(counts).sort((a,b) => b[1]-a[1])[0][0];
