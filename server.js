@@ -18,31 +18,46 @@ function generateCode() {
   return Math.random().toString(36).substring(2, 7).toUpperCase();
 }
 
+// chance: 0, 25, 50, 75, 100
+function rollRole(chance) {
+  if (chance === 0)   return false;
+  if (chance === 100) return true;
+  return Math.random() * 100 < chance;
+}
+
 function assignRoles(players, settings) {
   const count = players.length;
   const roles = [];
 
-  // ── Step 1: Mafia team first (always guaranteed) ──
+  // ── Step 1: Mafia team (always guaranteed) ──
   const mafiaCount = Math.min(settings.mafiaCount || 2, Math.floor(count / 2));
   let mafiaLeft = mafiaCount;
 
-  if (settings.hasDon && mafiaLeft > 0)      { roles.push('don');      mafiaLeft--; }
-  if (settings.hasSilencer && mafiaLeft > 0)  { roles.push('silencer'); mafiaLeft--; }
-  for (let i = 0; i < mafiaLeft; i++)          roles.push('mafia');
+  // Don and silencer use probability
+  if (mafiaLeft > 0 && rollRole(settings.donChance ?? (settings.hasDon ? 100 : 0))) {
+    roles.push('don'); mafiaLeft--;
+  }
+  if (mafiaLeft > 0 && rollRole(settings.silencerChance ?? (settings.hasSilencer ? 100 : 0))) {
+    roles.push('silencer'); mafiaLeft--;
+  }
+  for (let i = 0; i < mafiaLeft; i++) roles.push('mafia');
 
-  // ── Step 2: Good special roles — only add if slots remain ──
-  const specials = [];
-  if (settings.hasDoctor)    specials.push('doctor');
-  if (settings.hasDetective) specials.push('detective');
-  if (settings.hasElder)     specials.push('elder');
-  if (settings.hasAvenger)   specials.push('avenger');
-  if (settings.hasSniper)    specials.push('sniper');
+  // ── Step 2: Good special roles via probability ──
+  const specials = [
+    { role: 'doctor',    chance: settings.doctorChance    ?? (settings.hasDoctor    ? 100 : 0) },
+    { role: 'detective', chance: settings.detectiveChance ?? (settings.hasDetective ? 100 : 0) },
+    { role: 'elder',     chance: settings.elderChance     ?? (settings.hasElder     ? 100 : 0) },
+    { role: 'avenger',   chance: settings.avengerChance   ?? (settings.hasAvenger   ? 100 : 0) },
+    { role: 'sniper',    chance: settings.sniperChance    ?? (settings.hasSniper    ? 100 : 0) },
+  ];
 
-  for (const role of specials) {
-    if (roles.length < count) roles.push(role);
+  for (const { role, chance } of specials) {
+    if (roles.length < count - 1 && rollRole(chance)) { // always leave room for ≥1 civilian
+      roles.push(role);
+    }
   }
 
-  // ── Step 3: Fill remaining with civilians ──
+  // ── Step 3: Fill with civilians ──
   while (roles.length < count) roles.push('civilian');
 
   // Shuffle
@@ -214,18 +229,18 @@ io.on('connection', (socket) => {
     broadcast(room);
   });
 
+  // Host can update settings while in lobby
+  socket.on('update_settings', ({ code, settings }) => {
+    const room = rooms[code];
+    if (!room || room.hostId !== socket.id || room.phase !== 'lobby') return;
+    room.settings = { ...room.settings, ...settings };
+    broadcast(room); // sends updated settings to all players
+  });
+
   socket.on('start_game', ({ code }) => {
     const room = rooms[code];
     if (!room || room.hostId !== socket.id) return;
     if (room.players.length < 4) return socket.emit('error', { msg: 'need_more_players' });
-
-    // Validate roles don't exceed players
-    const s = room.settings;
-    const mafiaCount = Math.min(s.mafiaCount || 2, Math.floor(room.players.length / 2));
-    const specialCount = [s.hasDoctor,s.hasDetective,s.hasElder,s.hasAvenger,s.hasSniper].filter(Boolean).length;
-    if (mafiaCount + specialCount >= room.players.length) {
-      return socket.emit('error', { msg: 'too_many_roles' });
-    }
 
     const roles = assignRoles(room.players, room.settings);
     room.players.forEach((p, i) => { p.role = roles[i]; p.elderRevealed = false; p.avengerTarget = null; });
