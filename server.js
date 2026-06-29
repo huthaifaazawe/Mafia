@@ -116,6 +116,26 @@ function endGame(room, winner) {
   broadcast(room);
 }
 
+function checkNightDone(room) {
+  const alive = getAlive(room);
+
+  // For each action still in the list, check if a living player can still do it
+  // If the role-holder is dead/disconnected, remove that action automatically
+  room.nightActionsLeft = room.nightActionsLeft.filter(action => {
+    if (action === 'mafia_kill')
+      return alive.some(p => MAFIA_ROLES.includes(p.role));
+    if (action === 'doctor')
+      return alive.some(p => p.role === 'doctor');
+    if (action === 'detective')
+      return alive.some(p => p.role === 'detective');
+    if (action === 'silencer')
+      return alive.some(p => p.role === 'silencer');
+    return false;
+  });
+
+  checkNightDone(room);
+}
+
 function resolveNight(room) {
   const results = [];
 
@@ -282,7 +302,7 @@ io.on('connection', (socket) => {
       room.mafiaKillTarget = Object.entries(counts).sort((a,b) => b[1]-a[1])[0][0];
       room.nightActionsLeft = room.nightActionsLeft.filter(a => a !== 'mafia_kill');
       io.to(code).emit('mafia_voted');
-      if (room.nightActionsLeft.length === 0) resolveNight(room);
+      checkNightDone(room);
     }
   });
 
@@ -294,7 +314,7 @@ io.on('connection', (socket) => {
     if (!player || player.role !== 'silencer') return;
     room.silencerTarget = targetId;
     room.nightActionsLeft = room.nightActionsLeft.filter(a => a !== 'silencer');
-    if (room.nightActionsLeft.length === 0) resolveNight(room);
+    checkNightDone(room);
   });
 
   // ── Night: Doctor ──
@@ -303,7 +323,7 @@ io.on('connection', (socket) => {
     if (!room) return;
     room.doctorSave = targetId;
     room.nightActionsLeft = room.nightActionsLeft.filter(a => a !== 'doctor');
-    if (room.nightActionsLeft.length === 0) resolveNight(room);
+    checkNightDone(room);
   });
 
   // ── Night: Detective ──
@@ -314,7 +334,7 @@ io.on('connection', (socket) => {
     const isMafia = target && MAFIA_ROLES.includes(target.role);
     socket.emit('detective_result', { targetName: target?.name, isMafia });
     room.nightActionsLeft = room.nightActionsLeft.filter(a => a !== 'detective');
-    if (room.nightActionsLeft.length === 0) resolveNight(room);
+    checkNightDone(room);
   });
 
   // ── Avenger: sets their drag target (can change any time while alive) ──
@@ -406,6 +426,78 @@ io.on('connection', (socket) => {
     io.to(code).emit('chat_message', { name: player.name, text, type: 'public' });
   });
 
+  // ── Rejoin (after disconnect/refresh) ──
+  socket.on('rejoin_room', ({ code, name }) => {
+    const room = rooms[code];
+    if (!room) return socket.emit('error', { msg: 'room_not_found' });
+
+    // Find disconnected player by name
+    const player = room.players.find(p => p.name === name && p.disconnected);
+    if (player) {
+      // Restore their socket id
+      const oldId = player.id;
+      player.id = socket.id;
+      player.disconnected = false;
+
+      // Update votes/actions that referenced old id
+      if (room.votes[oldId])      { room.votes[socket.id] = room.votes[oldId];      delete room.votes[oldId]; }
+      if (room.mafiaVotes[oldId]) { room.mafiaVotes[socket.id] = room.mafiaVotes[oldId]; delete room.mafiaVotes[oldId]; }
+      if (room.hostId === oldId)  room.hostId = socket.id;
+      if (player.isHost)          player.isHost = true;
+
+      socket.join(code);
+      socket.emit('room_joined', { code, rejoin: true });
+
+      // Resend their role if game is running
+      if (room.phase !== 'lobby' && room.phase !== 'ended' && player.role) {
+        const mafiaTeam = MAFIA_ROLES.includes(player.role)
+          ? getMafia(room).map(m => ({ id: m.id, name: m.name, role: m.role }))
+          : null;
+        socket.emit('role_assigned', { role: player.role, mafiaTeam });
+        socket.emit('phase_change', {
+          phase: room.phase, day: room.day, players: sanitize(room)
+        });
+      }
+      broadcast(room);
+    } else {
+      // Not found as disconnected — try normal join
+      if (room.phase !== 'lobby') return socket.emit('error', { msg: 'game_started' });
+      if (room.players.length >= (room.settings.maxPlayers || 8)) return socket.emit('error', { msg: 'room_full' });
+      room.players.push({ id: socket.id, name, alive: true, isHost: false, role: null });
+      socket.join(code);
+      socket.emit('room_joined', { code });
+      broadcast(room);
+    }
+  });
+
+  // ── Rematch: reset room to lobby, keep same players ──
+  socket.on('rematch', ({ code }) => {
+    const room = rooms[code];
+    if (!room || room.hostId !== socket.id) return;
+
+    // Reset game state but keep players and settings
+    room.phase = 'lobby';
+    room.day = 0;
+    room.votes = {};
+    room.mafiaVotes = {};
+    room.mafiaKillTarget = null;
+    room.doctorSave = null;
+    room.silencerTarget = null;
+    room.nightActionsLeft = [];
+    room.sniperUsed = false;
+    room.players.forEach(p => {
+      p.alive = true;
+      p.role = null;
+      p.silenced = false;
+      p.elderRevealed = false;
+      p.avengerTarget = null;
+      p.disconnected = false;
+    });
+
+    broadcast(room);
+    io.to(code).emit('rematch_started');
+  });
+
   // ── Disconnect ──
   socket.on('disconnect', () => {
     for (const code in rooms) {
@@ -413,17 +505,40 @@ io.on('connection', (socket) => {
       const idx = room.players.findIndex(p => p.id === socket.id);
       if (idx === -1) continue;
       const player = room.players[idx];
-      io.to(code).emit('player_left', { name: player.name });
+
       if (room.phase === 'lobby') {
+        // In lobby: remove immediately
         room.players.splice(idx, 1);
+        io.to(code).emit('player_left', { name: player.name });
         if (room.players.length === 0) { delete rooms[code]; }
         else {
           if (player.isHost) { room.players[0].isHost = true; room.hostId = room.players[0].id; }
           broadcast(room);
         }
+      } else if (room.phase === 'ended') {
+        // After game ended: remove
+        room.players.splice(idx, 1);
+        if (room.players.length === 0) delete rooms[code];
       } else {
-        player.alive = false;
+        // Mid-game: mark as disconnected, give 60s to rejoin
+        player.disconnected = true;
+        io.to(code).emit('player_disconnected', { name: player.name });
         broadcast(room);
+
+        setTimeout(() => {
+          // Still disconnected after 60s? Mark dead
+          if (player.disconnected) {
+            player.alive = false;
+            player.disconnected = false;
+            io.to(code).emit('player_left', { name: player.name });
+            broadcast(room);
+            // Check if game should end
+            const win = checkWin(room);
+            if (win) { endGame(room, win); return; }
+            // If night, their action might have been pending — check if night can resolve now
+            if (room.phase === 'night') checkNightDone(room);
+          }
+        }, 60000);
       }
       break;
     }
