@@ -499,6 +499,55 @@ input:focus{
   100%{background:rgba(0,0,0,0);opacity:0}
 }
 
+/* ── Settings popup ── */
+.settings-popup-overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.85);backdrop-filter:blur(6px);
+  display:none;align-items:flex-end;justify-content:center;
+  z-index:200;
+}
+.settings-popup-overlay.show{display:flex}
+.settings-popup-sheet{
+  background:linear-gradient(180deg,var(--bg2),var(--bg));
+  border:1px solid var(--border);
+  border-bottom:none;
+  border-radius:20px 20px 0 0;
+  padding:20px 16px 40px;
+  width:100%;max-width:460px;
+  max-height:85dvh;overflow-y:auto;
+  animation:slideUp .3s ease-out;
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.settings-popup-sheet::-webkit-scrollbar{width:3px}
+.settings-popup-sheet::-webkit-scrollbar-thumb{background:var(--border)}
+.sheet-handle{
+  width:40px;height:4px;background:var(--border);
+  border-radius:2px;margin:0 auto 16px;
+}
+
+/* ── Probability row ── */
+.prob-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 0;border-bottom:1px solid rgba(34,34,58,.5);
+  gap:8px;
+}
+.prob-row:last-child{border-bottom:none}
+.prob-label{font-size:14px;flex:1;min-width:0}
+.prob-label span{display:block;font-size:11px;color:#55557a;margin-top:2px}
+.prob-btns{display:flex;gap:3px;flex-shrink:0}
+.prob-btn{
+  padding:5px 8px;border-radius:6px;border:1px solid var(--border);
+  background:var(--bg2);color:#55557a;
+  font-family:'Tajawal',sans-serif;font-size:12px;font-weight:700;
+  cursor:pointer;transition:.15s;min-width:36px;text-align:center;
+}
+.prob-btn:hover{border-color:var(--gold);color:var(--gold)}
+.prob-btn.active-0{border-color:#444;color:#555;background:var(--bg)}
+.prob-btn.active-25{border-color:#3498db;color:#3498db;background:rgba(52,152,219,.1)}
+.prob-btn.active-50{border-color:#f39c12;color:#f39c12;background:rgba(243,156,18,.1)}
+.prob-btn.active-75{border-color:#e67e22;color:#e67e22;background:rgba(230,126,34,.1)}
+.prob-btn.active-100{border-color:#2ecc71;color:#2ecc71;background:rgba(46,204,113,.1)}
+
 /* ── Utils ── */
 .mt-4{margin-top:4px}.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mt-16{margin-top:16px}.mt-20{margin-top:20px}.mt-24{margin-top:24px}
 .w100{width:100%}.text-center{text-align:center}
@@ -659,6 +708,9 @@ input:focus{
     </div>
     <div id="host-controls" style="display:none">
       <div class="divider"></div>
+      <button class="btn btn-ghost btn-sm w100" onclick="openSettingsPopup()" style="margin-bottom:10px">
+        <span>⚙️</span><span id="btn-edit-settings">تعديل الإعدادات</span>
+      </button>
       <button class="btn btn-primary" onclick="sfx('start');startGame()" id="btn-start">
         <span>⚔️</span><span id="btn-start-lbl">ابدأ اللعبة</span>
       </button>
@@ -721,6 +773,84 @@ input:focus{
     <button class="btn btn-gold mt-24" onclick="sfx('click');resetToMenu()" id="btn-play-again">
       <span>🔄</span><span id="lbl-play-again">العب مرة أخرى</span>
     </button>
+  </div>
+</div>
+
+<!-- ══ Settings Popup (host only, in lobby) ══ -->
+<div class="settings-popup-overlay" id="settings-popup" onclick="if(event.target===this)closeSettingsPopup()">
+  <div class="settings-popup-sheet">
+    <div class="sheet-handle"></div>
+    <div class="flex-row" style="margin-bottom:16px">
+      <h2 style="color:var(--gold);font-size:18px" id="sp-title">إعدادات الغرفة</h2>
+      <button class="btn btn-ghost btn-sm" onclick="closeSettingsPopup()" style="width:auto;padding:6px 14px" id="sp-done">حفظ ✓</button>
+    </div>
+
+    <!-- Player / mafia count -->
+    <div class="card" style="margin-bottom:10px">
+      <div class="section-title" id="sp-lbl-players">عدد اللاعبين</div>
+      <div class="toggle-row">
+        <span id="sp-lbl-max">الحد الأقصى</span>
+        <div class="stepper">
+          <button class="stepper-btn" onclick="spStep('maxPlayers',-1)">−</button>
+          <span class="stepper-val" id="sp-val-maxPlayers">8</span>
+          <button class="stepper-btn" onclick="spStep('maxPlayers',1)">+</button>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <span id="sp-lbl-mafia">عدد المافيا</span>
+        <div class="stepper">
+          <button class="stepper-btn" onclick="spStep('mafiaCount',-1)">−</button>
+          <span class="stepper-val" id="sp-val-mafiaCount">2</span>
+          <button class="stepper-btn" onclick="spStep('mafiaCount',1)">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mafia special roles -->
+    <div class="card" style="margin-bottom:10px">
+      <div class="section-title" id="sp-lbl-mafia-roles">أدوار المافيا</div>
+      <div class="prob-row" id="sp-row-don">
+        <div class="prob-label"><span id="sp-don-lbl">دون المافيا 👑</span><span id="sp-don-desc">يُشخَّص كمواطن للمحقق</span></div>
+        <div class="prob-btns" id="pb-don"></div>
+      </div>
+      <div class="prob-row" id="sp-row-silencer">
+        <div class="prob-label"><span id="sp-silencer-lbl">المُسكِّت 🤫</span><span id="sp-silencer-desc">يسكّت أي لاعب</span></div>
+        <div class="prob-btns" id="pb-silencer"></div>
+      </div>
+    </div>
+
+    <!-- Good special roles -->
+    <div class="card" style="margin-bottom:10px">
+      <div class="section-title" id="sp-lbl-good-roles">أدوار الصالحين</div>
+      <div class="prob-row">
+        <div class="prob-label"><span id="sp-doctor-lbl">الطبيب 💉</span><span id="sp-doctor-desc">يحمي لاعبًا من القتل</span></div>
+        <div class="prob-btns" id="pb-doctor"></div>
+      </div>
+      <div class="prob-row">
+        <div class="prob-label"><span id="sp-detective-lbl">المحقق 🔍</span><span id="sp-detective-desc">يكشف هوية أي لاعب</span></div>
+        <div class="prob-btns" id="pb-detective"></div>
+      </div>
+      <div class="prob-row">
+        <div class="prob-label"><span id="sp-elder-lbl">شيخ الصالحين 👴</span><span id="sp-elder-desc">صوته = 3 بعد الكشف</span></div>
+        <div class="prob-btns" id="pb-elder"></div>
+      </div>
+      <div class="prob-row">
+        <div class="prob-label"><span id="sp-avenger-lbl">ولد الصالحين ⚡</span><span id="sp-avenger-desc">يسحب لاعبًا معه لما يموت</span></div>
+        <div class="prob-btns" id="pb-avenger"></div>
+      </div>
+      <div class="prob-row">
+        <div class="prob-label"><span id="sp-sniper-lbl">القناص 🎯</span><span id="sp-sniper-desc">طلقة وحدة طول اللعبة</span></div>
+        <div class="prob-btns" id="pb-sniper"></div>
+      </div>
+    </div>
+
+    <!-- Host mode -->
+    <div class="card">
+      <div class="toggle-row">
+        <div class="toggle-label"><span id="sp-host-lbl">وضع المضيف 🎙️</span><span id="sp-host-desc">المضيف يدير المراحل يدوياً</span></div>
+        <label class="toggle"><input type="checkbox" id="sp-tog-host"><div class="toggle-slider"></div></label>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -842,6 +972,7 @@ const T = {
     joinTitle:'انضم للغرفة',lblCode:'كود الغرفة',btnJoin:'انضم',
     lblRoomCode:'كود الغرفة',btnCopy:'📋 نسخ الكود',copied:'✓ تم النسخ!',
     lblPlayersInRoom:'اللاعبون',btnStart:'ابدأ اللعبة',startHint:'يجب وجود ٤ لاعبين على الأقل',
+    btnEditSettings:'⚙️ تعديل الإعدادات',spDone:'حفظ ✓',
     waitText:'بانتظار المضيف...',youTag:'(أنت)',hostTag:'مضيف',
     roles:{mafia:'مافيا',don:'دون المافيا',silencer:'المُسكِّت',doctor:'طبيب',detective:'محقق',elder:'شيخ الصالحين',avenger:'ولد الصالحين',sniper:'قناص',civilian:'مواطن'},
     roleIcons:{mafia:'🔫',don:'👑',silencer:'🤫',doctor:'💉',detective:'🔍',elder:'👴',avenger:'⚡',sniper:'🎯',civilian:'👤'},
@@ -899,6 +1030,7 @@ const T = {
     joinTitle:'Join Room',lblCode:'Room Code',btnJoin:'Join',
     lblRoomCode:'Room Code',btnCopy:'📋 Copy Code',copied:'✓ Copied!',
     lblPlayersInRoom:'Players',btnStart:'Start Game',startHint:'Need at least 4 players',
+    btnEditSettings:'⚙️ Edit Settings',spDone:'Save ✓',
     waitText:'Waiting for host...',youTag:'(you)',hostTag:'host',
     roles:{mafia:'Mafia',don:'The Don',silencer:'Silencer',doctor:'Doctor',detective:'Detective',elder:'Elder',avenger:'Avenger',sniper:'Sniper',civilian:'Civilian'},
     roleIcons:{mafia:'🔫',don:'👑',silencer:'🤫',doctor:'💉',detective:'🔍',elder:'👴',avenger:'⚡',sniper:'🎯',civilian:'👤'},
@@ -973,6 +1105,7 @@ function applyLang(){
   s('btn-create-room',l.btnCreateRoom);s('join-title',l.joinTitle);s('lbl-code',l.lblCode);
   s('btn-join',l.btnJoin);s('lbl-room-code',l.lblRoomCode);s('btn-copy',l.btnCopy);
   s('lbl-players-in-room',l.lblPlayersInRoom);s('btn-start-lbl',l.btnStart);s('start-hint',l.startHint);
+  s('btn-edit-settings',l.btnEditSettings);s('sp-done',l.spDone);
   s('wait-text',l.waitText);s('lbl-end-vote',l.lblEndVote);s('lbl-roles-reveal',l.lblRolesReveal);
   s('lbl-ok',l.ok);s('lbl-my-role',l.lblMyRole);s('lbl-alive',l.lblAlive);
   s('chat-header',l.chatHeader);
@@ -998,25 +1131,86 @@ function phaseTransition(emoji, cb){
 }
 
 // ══════════════════════════════════════════════════════════
-// SETTINGS
+// SETTINGS POPUP (lobby host)
 // ══════════════════════════════════════════════════════════
-const settings={maxPlayers:8,mafiaCount:2};
-function stepSetting(k,d){
+
+// Local copy of settings edited in popup, synced to server on close
+const liveSettings = {
+  maxPlayers:8, mafiaCount:2,
+  donChance:0, silencerChance:0,
+  doctorChance:100, detectiveChance:100,
+  elderChance:0, avengerChance:0, sniperChance:0,
+  hostMode:false
+};
+
+const PROB_ROLES = ['don','silencer','doctor','detective','elder','avenger','sniper'];
+const PROB_STEPS = [0, 25, 50, 75, 100];
+const PROB_LABELS = ['✕','25','50','75','✓'];
+
+function buildProbBtns(roleKey) {
+  const container = document.getElementById(`pb-${roleKey}`);
+  if (!container) return;
+  container.innerHTML = PROB_STEPS.map((val, i) => `
+    <button class="prob-btn ${liveSettings[roleKey+'Chance']===val?'active-'+val:''}"
+      onclick="setProbability('${roleKey}',${val})">${PROB_LABELS[i]}</button>
+  `).join('');
+}
+
+function setProbability(roleKey, val) {
+  liveSettings[roleKey+'Chance'] = val;
+  buildProbBtns(roleKey);
+  sfx('click');
+}
+
+function spStep(key, delta) {
+  if (key==='maxPlayers') liveSettings.maxPlayers = Math.max(4, Math.min(15, liveSettings.maxPlayers + delta));
+  if (key==='mafiaCount') liveSettings.mafiaCount = Math.max(1, Math.min(6, liveSettings.mafiaCount + delta));
+  document.getElementById(`sp-val-${key}`).textContent = liveSettings[key];
+  sfx('click');
+}
+
+function openSettingsPopup() {
+  // Sync current room settings into liveSettings
+  if (window._currentRoomSettings) {
+    Object.assign(liveSettings, window._currentRoomSettings);
+  }
+  // Render prob buttons
+  PROB_ROLES.forEach(r => buildProbBtns(r));
+  document.getElementById('sp-val-maxPlayers').textContent = liveSettings.maxPlayers;
+  document.getElementById('sp-val-mafiaCount').textContent = liveSettings.mafiaCount;
+  document.getElementById('sp-tog-host').checked = liveSettings.hostMode || false;
+  document.getElementById('settings-popup').classList.add('show');
+}
+
+function closeSettingsPopup() {
+  liveSettings.hostMode = document.getElementById('sp-tog-host').checked;
+  // Send updated settings to server
+  socket.emit('update_settings', { code: currentRoom, settings: { ...liveSettings } });
+  window._currentRoomSettings = { ...liveSettings };
+  document.getElementById('settings-popup').classList.remove('show');
+  sfx('click');
+}
+
+// Also update stepSetting to mirror liveSettings (for create screen)
+function stepSetting(k, d) {
   if(k==='maxPlayers') settings.maxPlayers=Math.max(4,Math.min(15,settings.maxPlayers+d));
   if(k==='mafiaCount') settings.mafiaCount=Math.max(1,Math.min(6,settings.mafiaCount+d));
   document.getElementById(`val-${k}`).textContent=settings[k];
   sfx('click');
 }
 function buildSettings(){
-  return{maxPlayers:settings.maxPlayers,mafiaCount:settings.mafiaCount,
-    hasDon:document.getElementById('tog-don').checked,
-    hasSilencer:document.getElementById('tog-silencer').checked,
-    hasDoctor:document.getElementById('tog-doctor').checked,
-    hasDetective:document.getElementById('tog-detective').checked,
-    hasElder:document.getElementById('tog-elder').checked,
-    hasAvenger:document.getElementById('tog-avenger').checked,
-    hasSniper:document.getElementById('tog-sniper').checked,
-    hostMode:document.getElementById('tog-host').checked};
+  return{
+    maxPlayers: settings.maxPlayers,
+    mafiaCount: settings.mafiaCount,
+    donChance:       document.getElementById('tog-don').checked      ? 100 : 0,
+    silencerChance:  document.getElementById('tog-silencer').checked  ? 100 : 0,
+    doctorChance:    document.getElementById('tog-doctor').checked    ? 100 : 0,
+    detectiveChance: document.getElementById('tog-detective').checked ? 100 : 0,
+    elderChance:     document.getElementById('tog-elder').checked     ? 100 : 0,
+    avengerChance:   document.getElementById('tog-avenger').checked   ? 100 : 0,
+    sniperChance:    document.getElementById('tog-sniper').checked    ? 100 : 0,
+    hostMode:        document.getElementById('tog-host').checked
+  };
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1299,6 +1493,7 @@ socket.on('room_joined',({code})=>{currentRoom=code;sfx('join');showScreen('scre
 
 socket.on('room_update',data=>{
   window._lastPlayers=data.players;
+  window._currentRoomSettings=data.settings; // cache for settings popup
   if(document.getElementById('screen-lobby').classList.contains('active')) renderLobby(data);
   if(document.getElementById('screen-game').classList.contains('active')){
     const me=data.players.find(p=>p.id===socket.id);
