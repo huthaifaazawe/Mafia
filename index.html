@@ -770,8 +770,11 @@ input:focus{
     <div class="divider"></div>
     <div class="section-title text-center" id="lbl-roles-reveal">كشف الأدوار</div>
     <div class="card roles-reveal" id="roles-reveal-list"></div>
-    <button class="btn btn-gold mt-24" onclick="sfx('click');resetToMenu()" id="btn-play-again">
+    <button class="btn btn-gold mt-24" id="btn-play-again" onclick="sfx('start');requestRematch()">
       <span>🔄</span><span id="lbl-play-again">العب مرة أخرى</span>
+    </button>
+    <button class="btn btn-ghost mt-8" onclick="sfx('click');resetToMenu()" id="btn-main-menu">
+      <span>🏠</span><span id="lbl-main-menu">القائمة الرئيسية</span>
     </button>
   </div>
 </div>
@@ -1004,7 +1007,9 @@ const T = {
     nightResultTitle:'انتهى الليل',killed:n=>`💀 تم قتل ${n} الليلة`,saved:'💉 الطبيب أنقذ أحدًا الليلة!',noKill:'😮 لا ضحايا الليلة',
     dayResultTitle:'انتهى النهار',eliminated:n=>`⚖️ تم طرد ${n} بالتصويت`,noEliminate:'لم يُطرد أحد',
     winMafia:'فازت المافيا!',winCiv:'فاز أهل البلد!',winMafiaSub:'سيطرت المافيا على البلد',winCivSub:'انكشفت المافيا',
-    lblRolesReveal:'كشف الأدوار',btnPlayAgain:'العب مرة أخرى',
+    lblRolesReveal:'كشف الأدوار',btnPlayAgain:'العب مرة أخرى',btnMainMenu:'القائمة الرئيسية',
+    playerDisconnected:n=>`⚠️ ${n} قطع الاتصال... لديه 60 ثانية للعودة`,
+    playerRejoined:n=>`✅ ${n} عاد للعبة!`,
     errRoomNotFound:'الغرفة غير موجودة!',errGameStarted:'اللعبة بدأت بالفعل!',errRoomFull:'الغرفة ممتلئة!',errNeedMore:'تحتاج 4 لاعبين على الأقل!',errTooManyRoles:'الأدوار المختارة أكثر من اللاعبين! قلّل الأدوار.',
     playerLeft:n=>`${n} غادر اللعبة`,detectiveMafia:n=>`🔍 ${n} من المافيا!`,detectiveCivilian:n=>`🔍 ${n} مواطن بريء`,
     silenced:'🤫 أنت مُسكَّت هذا النهار، لا يمكنك التصويت',dead:'💀 أنت ميت، لا يمكنك التصويت',ok:'حسناً',
@@ -1062,7 +1067,9 @@ const T = {
     nightResultTitle:'Night is Over',killed:n=>`💀 ${n} was killed tonight`,saved:'💉 The Doctor saved someone tonight!',noKill:'😮 No victims tonight',
     dayResultTitle:'Day is Over',eliminated:n=>`⚖️ ${n} was eliminated by vote`,noEliminate:'Nobody was eliminated',
     winMafia:'Mafia Wins!',winCiv:'Civilians Win!',winMafiaSub:'Mafia took over the city',winCivSub:'The Mafia was exposed',
-    lblRolesReveal:'Roles Revealed',btnPlayAgain:'Play Again',
+    lblRolesReveal:'Roles Revealed',btnPlayAgain:'Play Again',btnMainMenu:'Main Menu',
+    playerDisconnected:n=>`⚠️ ${n} disconnected... 60 seconds to rejoin`,
+    playerRejoined:n=>`✅ ${n} rejoined!`,
     errRoomNotFound:'Room not found!',errGameStarted:'Game already started!',errRoomFull:'Room is full!',errNeedMore:'Need at least 4 players!',errTooManyRoles:'Too many roles selected for player count! Remove some roles.',
     playerLeft:n=>`${n} left the game`,detectiveMafia:n=>`🔍 ${n} is Mafia!`,detectiveCivilian:n=>`🔍 ${n} is an innocent Civilian`,
     silenced:'🤫 You are silenced today, cannot vote',dead:'💀 You are dead, cannot vote',ok:'OK',
@@ -1110,6 +1117,7 @@ function applyLang(){
   s('lbl-ok',l.ok);s('lbl-my-role',l.lblMyRole);s('lbl-alive',l.lblAlive);
   s('chat-header',l.chatHeader);
   const pa=document.getElementById('btn-play-again');if(pa)pa.querySelector('span:last-child').textContent=l.btnPlayAgain;
+  const mm=document.getElementById('btn-main-menu');if(mm)mm.querySelector('span:last-child').textContent=l.btnMainMenu;
   if(myName)s('greeting-text',`👋 ${myName}`);
   document.getElementById('chat-input').placeholder=l.chatPH;
 }
@@ -1219,15 +1227,26 @@ function buildSettings(){
 function submitName(){
   const v=document.getElementById('input-name').value.trim();
   if(!v){showToast(t().lblName);return}
-  myName=v;document.getElementById('greeting-text').textContent=`👋 ${myName}`;
+  myName=v;
+  // Save name for next visit
+  try{ localStorage.setItem('mafia_name', myName); }catch(e){}
+  document.getElementById('greeting-text').textContent=`👋 ${myName}`;
   sfx('click');showScreen('screen-menu');
 }
+
 function resetToMenu(){
   myRole=null;currentRoom=null;currentPhase=null;
   myAlive=true;mySilenced=false;amHost=false;hasActed=false;
   document.getElementById('chat-messages').innerHTML='';
+  try{ sessionStorage.removeItem('mafia_room'); }catch(e){}
   showScreen('screen-menu');
 }
+
+function requestRematch(){
+  // Host requests rematch — everyone stays in room
+  socket.emit('rematch',{code:currentRoom});
+}
+
 function createRoom(){socket.emit('create_room',{name:myName,settings:buildSettings()})}
 function joinRoom(){
   const code=document.getElementById('input-code').value.trim().toUpperCase();
@@ -1488,8 +1507,6 @@ function showToast(msg){
 // ══════════════════════════════════════════════════════════
 // SOCKETS
 // ══════════════════════════════════════════════════════════
-socket.on('room_created',({code})=>{currentRoom=code;sfx('join');showScreen('screen-lobby')});
-socket.on('room_joined',({code})=>{currentRoom=code;sfx('join');showScreen('screen-lobby')});
 
 socket.on('room_update',data=>{
   window._lastPlayers=data.players;
@@ -1623,10 +1640,62 @@ socket.on('sniper_result',({hit,targetName,targetRole,sniperName})=>{
   renderActionArea(window._lastPlayers||[]);
 });
 
+// ── Rematch: server reset room, go back to lobby ──
+socket.on('rematch_started',()=>{
+  myRole=null;currentPhase=null;currentDay=1;
+  myAlive=true;mySilenced=false;hasActed=false;
+  window._sniperUsed=false;window.room_elderRevealed=false;
+  window._pendingGameTransition=null;
+  document.getElementById('chat-messages').innerHTML='';
+  sfx('join');
+  showScreen('screen-lobby');
+});
+
+// ── Player disconnected (mid-game) ──
+socket.on('player_disconnected',({name})=>{
+  addChatMsg({type:'system',text:t().playerDisconnected(name)});
+});
+
 // ══════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════
 document.getElementById('input-name').addEventListener('keydown',e=>{if(e.key==='Enter')submitName()});
+
+// Auto-load saved name
+try{
+  const saved=localStorage.getItem('mafia_name');
+  if(saved){
+    myName=saved;
+    document.getElementById('input-name').value=saved;
+    document.getElementById('greeting-text').textContent=`👋 ${saved}`;
+  }
+}catch(e){}
+
+// Auto-rejoin if page refreshed mid-game
+try{
+  const savedRoom=sessionStorage.getItem('mafia_room');
+  const savedName=localStorage.getItem('mafia_name');
+  if(savedRoom && savedName){
+    myName=savedName;
+    socket.emit('rejoin_room',{code:savedRoom,name:savedName});
+  }
+}catch(e){}
+
+socket.on('room_joined',({code,rejoin})=>{
+  currentRoom=code;
+  // Save room code for rejoin on refresh
+  try{ sessionStorage.setItem('mafia_room',code); }catch(e){}
+  sfx('join');
+  showScreen('screen-lobby');
+});
+
+socket.on('room_created',({code})=>{
+  currentRoom=code;
+  try{ sessionStorage.setItem('mafia_room',code); }catch(e){}
+  sfx('join');
+  showScreen('screen-lobby');
+});
+
 applyLang();
 </script>
 </body>
